@@ -250,7 +250,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       { handle: "not_selling_ser", text: "I am NOT selling. The floor is a fiction invented by paper hands. We ride at dawn — 100x is programmed.", author: "Chad Bullington (fictional)" },
       { handle: "gm_rug_capital", text: "Team tokens are LOCKED forever. Anyone saying otherwise is fud. Devs are building. gm.", author: "Rug Capital (fictional)" },
       { handle: "ser_floor_holder", text: "Chart looks exactly like ETH in 2015. I have never been more financially confident in anything.", author: "Floor Holder (fictional)" },
-      { handle: "dev_is_based_fr", text: "Audit passes next week. Liquidity locked. Utility announcement imminent. This is the one, fam.", author: "Based Dev Watch (fictional)" }
+      { handle: "dev_is_based_fr", text: "Audit passes next week. Liquidity locked. Utility announcement imminent. This is the one, fam.", author: "Based Dev Watch (fictional)" },
+      { handle: "ser_gm_only", text: "gm. we pump.", author: "GM Ser (fictional)" }
     ];
     var demoRows = [];
     for (var di = 0; di < Math.min(DEMO_N, 30); di++) {
@@ -425,13 +426,16 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       ledgerEl.appendChild(row);
     });
 
-    // Tickers scroll only when the words overflow their window, at a constant
-    // per-pixel pace (long posts take longer, nothing sprints or stutters)
+    // Every ticker scrolls, wire-style, at a constant per-pixel pace.
+    // Short texts get cloned until the loop is seamless (even copy count, ≥2× window).
     Array.prototype.forEach.call(ledgerEl.querySelectorAll(".ledger-ticker"), function (tk) {
       var inner = tk.firstChild;
       if (!inner || !inner.firstChild) return;
-      if (inner.scrollWidth - 56 <= tk.clientWidth + 2) return; // fits — hold still
-      inner.appendChild(inner.firstChild.cloneNode(true));
+      var guard = 0;
+      while (inner.scrollWidth < tk.clientWidth * 2 && guard++ < 24) {
+        inner.appendChild(inner.firstChild.cloneNode(true));
+      }
+      if (inner.children.length % 2) inner.appendChild(inner.firstChild.cloneNode(true));
       inner.style.animationDuration = Math.max(14, Math.round(inner.scrollWidth / 2 / 55)) + "s";
       inner.classList.add("tick");
     });
