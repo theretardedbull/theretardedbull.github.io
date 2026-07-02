@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Retarded Bull Gazette — all the rugs that's fit to print</title>
+<meta name="description" content="A living newspaper that permanently archives pump-and-dump shill tweets before they're deleted. Paste a tweet URL into the Saver — once filed, the delete button can't reach it.">
+<link rel="canonical" href="https://theretardedbull.xyz/">
+<meta name="theme-color" content="#efe5cb">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Retarded Bull Gazette">
+<meta property="og:title" content="The Retarded Bull Gazette — all the rugs that's fit to print">
+<meta property="og:description" content="A living newspaper that permanently archives pump-and-dump shill tweets before they're deleted.">
+<meta property="og:url" content="https://theretardedbull.xyz/">
+<meta property="og:image" content="https://theretardedbull.xyz/social-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Retarded Bull Gazette — all the rugs that's fit to print">
+<meta name="twitter:description" content="A living newspaper that permanently archives pump-and-dump shill tweets before they're deleted.">
+<meta name="twitter:image" content="https://theretardedbull.xyz/social-card.png">
+<link rel="icon" href="bull-editor.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#231d14;
+  --ink-muted:#3d3426;
+  --sepia:#5c4f38;
+  --rule:#d8cba6;
+  --oxblood:#7a1f1f;
+  --paper-card:#fbf6e8;
+  --paper-panel:#f2ead2;
+  --paper-mat:#efe6d0;
+  --cream:#f0e6cd;
+  --gutter:clamp(16px, 2.26vw, 28px); /* 28px at the 1240px design width */
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',Georgia,serif;overflow-x:clip}
+.sheet{max-width:1240px;margin:0 auto;min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7dab9 100%);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+
+.rule-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 16px;padding:10px var(--gutter) 6px;border-bottom:1px solid var(--ink);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase}
+
+.masthead{position:relative;text-align:center;padding:22px var(--gutter) 12px;border-bottom:3px double var(--ink)}
+.masthead h1{margin:0;font-size:clamp(26px, 7.4vw, 64px);line-height:1;font-weight:700;letter-spacing:.02em;font-variant:small-caps;text-wrap:balance}
+.motto{margin-top:10px;font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;line-height:1.6}
+.stamp{position:absolute;top:16px;right:34px;transform:rotate(-6deg);border:2.5px solid var(--oxblood);color:var(--oxblood);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;letter-spacing:.16em;padding:4px 10px;background:rgba(251,246,232,.9);white-space:nowrap}
+
+.plate-wrap{display:flex;justify-content:center;padding:clamp(24px, 2.74vw, 34px) var(--gutter) 8px}
+.plate{position:relative;width:min(480px, 100%)}
+.plate-frame{border:1px solid var(--ink);box-shadow:0 0 0 6px var(--paper-mat),0 0 0 7px var(--ink),6px 8px 0 rgba(35,29,20,.18);overflow:hidden;aspect-ratio:480/420;transition:transform .55s ease}
+.plate:hover .plate-frame{transform:rotate(-.7deg)}
+.plate-frame img{width:100%;height:100%;object-fit:cover;display:block}
+.plate:hover .plate-frame img{animation:rrKen 7s ease-in-out infinite alternate}
+.plate-frame.dragover{outline:3px dashed var(--oxblood);outline-offset:-12px}
+.plate-caption{text-align:center;font-family:'Special Elite',monospace;font-size:12.5px;margin-top:10px;color:var(--ink-muted)}
+
+.saver{margin:20px clamp(16px, 9.68vw, 120px) 0;border:2px dashed var(--ink);background:var(--paper-panel);padding:16px clamp(14px, 1.6vw, 20px)}
+.saver-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.saver-title{font-size:clamp(20px, 3.2vw, 24px);font-weight:700;font-variant:small-caps}
+.saver-count{font-family:'Special Elite',monospace;font-size:12px}
+.saver-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.saver-input{flex:1 1 260px;min-width:0;border:1px solid var(--ink);background:var(--paper-card);color:var(--ink);font-family:'Special Elite',monospace;font-size:13px;padding:12px 14px;outline:none;border-radius:0;-webkit-appearance:none;appearance:none}
+.saver-input:focus{box-shadow:3px 3px 0 rgba(35,29,20,.25)}
+.file-it{flex:none;margin-inline:auto;border:2.5px solid var(--oxblood);color:var(--oxblood);background:rgba(251,246,232,.9);padding:10px 22px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.18em;transform:rotate(-1.5deg);cursor:pointer;display:flex;align-items:center;border-radius:0}
+.file-it:hover{background:var(--oxblood);color:var(--cream)}
+.file-it:active{transform:rotate(-1.5deg) translateY(1px)}
+.saver-status{font-family:'IBM Plex Mono',monospace;font-size:11.5px;margin-top:8px;min-height:15px;color:var(--ink)}
+.saver-status.err{color:var(--oxblood)}
+.small-print{font-size:11px;font-style:italic;margin-top:6px;letter-spacing:.04em;color:var(--sepia)}
+
+.ledger{margin-top:10px;border:1px solid var(--ink);background:var(--paper-card)}
+.ledger-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-top:1px solid var(--rule);font-family:'Special Elite',monospace;font-size:12px;color:var(--ink)}
+.ledger-row:first-child{border-top:none}
+.ledger-handle{font-weight:700;flex:none}
+.ledger-id{color:var(--sepia);flex:none}
+.ledger-ticker{flex:1;min-width:0;overflow:hidden;white-space:nowrap;border-left:1px solid var(--rule);border-right:1px solid var(--rule);padding:0 10px}
+.ledger-ticker-inner{display:inline-flex;white-space:nowrap;animation:rrTick 26s linear infinite}
+.ledger-ticker-inner span{padding-right:56px}
+.ledger-time{color:var(--sepia);flex:none}
+.ledger-saved{flex:none;font-weight:700}
+.ledger-links{display:flex;align-items:center;gap:12px;flex:none}
+.ledger-row a{flex:none;text-decoration:underline}
+.ledger-row a.ox{color:var(--oxblood)}
+.ledger-row a.ink{color:var(--ink)}
+
+.footer{border-top:3px double var(--ink);margin-top:26px;padding:12px var(--gutter) calc(16px + env(safe-area-inset-bottom));font-size:11.5px;color:var(--ink-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+@keyframes rrTick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes rrKen{from{transform:scale(1.01) translate(0,0)}to{transform:scale(1.08) translate(-1.6%,-2.2%)}}
+
+/* Stamp folds into the flow before it can collide with the masthead */
+@media (max-width:1100px){
+  .stamp{position:static;display:inline-block;margin-top:12px;transform:rotate(-3deg)}
+}
+
+/* Ledger rows re-stack: receipt data on top, ticker gets its own full line */
+@media (max-width:899px){
+  .ledger-row{flex-wrap:wrap;row-gap:4px}
+  .ledger-ticker{order:10;flex:1 1 100%;border-left:none;border-right:none;border-top:1px dotted var(--rule);padding:6px 0 0;margin-top:2px}
+  .rule-row{justify-content:center;text-align:center}
+}
+
+@media (max-width:640px){
+  .footer{justify-content:center;text-align:center}
+  .motto{letter-spacing:.12em}
+}
+
+/* Phone held landscape: shrink the plate so masthead + editor still share the screen */
+@media (orientation:landscape) and (max-height:560px){
+  .plate{width:min(100%, calc(62svh * 480 / 420))}
+  .plate-wrap{padding-top:20px}
+}
+
+/* Touch devices: 16px input defeats iOS focus-zoom; bigger tap targets */
+@media (pointer:coarse){
+  .saver-input{font-size:16px}
+  .file-it{min-height:44px}
+  .ledger-row a{padding:4px 0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .ledger-ticker-inner{animation:none}
+  .plate:hover .plate-frame img{animation:none}
+  .plate-frame{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="rule-row">
+    <span>Demonstration edition</span>
+    <span>Sol York bureau — <span id="dateline">…</span></span>
+    <span>Price: two lamports</span>
+  </div>
+
+  <header class="masthead">
+    <h1>The Retarded Bull Gazette</h1>
+    <div class="motto">All the rugs that's fit to print — presses arriving soon&trade;</div>
+    <div class="stamp">UNDER CONSTRUCTION</div>
+  </header>
+
+  <div class="plate-wrap">
+    <div class="plate">
+      <div class="plate-frame" id="editorFrame"><img id="editorImg" src="bull-editor.svg" alt="The editor — a 1930s woodcut bull in a fedora with a PRESS card, cigar lit, hammering a typewriter"></div>
+      <div class="plate-caption">the editor, typing out the rugs — cigar break &#8470;4 of 9</div>
+    </div>
+  </div>
+
+  <section class="saver">
+    <div class="saver-head">
+      <div class="saver-title">The Saver — open during construction</div>
+      <div class="saver-count">IN THE VAULT: <b id="vaultCount">0</b> TWEETS</div>
+    </div>
+    <div class="saver-row">
+      <input class="saver-input" id="tweetUrl" type="url" inputmode="url" placeholder="https://x.com/handle/status/1234567890" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="file-it" id="fileIt" type="button">FILE IT</button>
+    </div>
+    <div class="saver-status" id="saveStatus" role="status" aria-live="polite"></div>
+    <div class="small-print">*** to save a tweet — paste the URL of the post BEFORE it is deleted; once filed, the delete button can't reach it ***</div>
+    <div class="ledger" id="ledger"></div>
+  </section>
+
+  <footer class="footer">
+    <span>We publish documents, not verdicts. Disputes: bullitchloser@gmail.com — 72h review.</span>
+    <span>All handles fictional &middot; bull crew local &#8470;420</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Site-wide settings (see design/README.md — Tweakable props)
+  var GITHUB_REPO = "";        // "owner/repo" → the Saver opens a prefilled save issue instead of Wayback
+  var REDACT_HANDLES = false;  // true → blur all @handles (legal-safe screenshot mode)
+
+  var KEY = "rugreport_vault_v1";
+  var DISPLAY_CAP = 12, PERSIST_CAP = 50;
+
+  var input = document.getElementById("tweetUrl");
+  var button = document.getElementById("fileIt");
+  var statusEl = document.getElementById("saveStatus");
+  var countEl = document.getElementById("vaultCount");
+  var ledgerEl = document.getElementById("ledger");
+
+  // Dateline is the reader's own clock — every visitor sees today's edition
+  document.getElementById("dateline").textContent =
+    new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+  // ?demo=1 → two fictional rows for design review; never persisted
+  var DEMO = new URLSearchParams(location.search).get("demo") === "1";
+
+  var rows = load();
+  if (DEMO) {
+    rows = [
+      { handle: "not_selling_ser", id: "1808642042069421337", url: "https://x.com/not_selling_ser/status/1808642042069421337",
+        time: "09:41", status: "SAVED", text: "I am NOT selling. The floor is a fiction invented by paper hands. We ride at dawn — 100x is programmed.", author: "Chad Bullington (fictional)" },
+      { handle: "gm_rug_capital", id: "1808699134201984420", url: "https://x.com/gm_rug_capital/status/1808699134201984420",
+        time: "11:07", status: "SAVED", text: "Team tokens are LOCKED forever. Anyone saying otherwise is fud. Devs are building. gm.", author: "Rug Capital (fictional)" }
+    ].concat(rows);
+  }
+  render();
+  rows.forEach(function (r) { if (!r.text) fetchText(r.url, r.id); });
+
+  function load() {
+    var parsed = null;
+    try { parsed = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+    return Array.isArray(parsed) ? parsed.filter(function (r) { return r && r.handle && r.id; }) : [];
+  }
+
+  function persist() {
+    if (DEMO) return;
+    try { localStorage.setItem(KEY, JSON.stringify(rows.slice(0, PERSIST_CAP))); } catch (e) {}
+  }
+
+  function setStatus(msg, ok) {
+    statusEl.textContent = msg;
+    statusEl.className = "saver-status" + (ok === false ? " err" : "");
+  }
+
+  function saveIt() {
+    var v = (input.value || "").trim();
+    var m = v.match(/^https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/([A-Za-z0-9_]{1,15})\/status\/(\d+)/i);
+    if (!m) {
+      setStatus("✗ X.COM / TWITTER.COM STATUS LINKS ONLY — PASTE THE FULL TWEET URL", false);
+      return;
+    }
+    var clean = "https://x.com/" + m[1] + "/status/" + m[2];
+    rows.unshift({
+      handle: m[1], id: m[2], url: clean,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: "SAVED"
+    });
+    rows = rows.slice(0, PERSIST_CAP);
+    persist();
+    render();
+    fetchText(clean, m[2]);
+    input.value = "";
+    if (GITHUB_REPO) {
+      setStatus("✓ SAVED LOCALLY — OPENING GITHUB ISSUE: SUBMIT IT AND THE VAULT BOT STORES IT FOREVER", true);
+      try {
+        window.open("https://github.com/" + GITHUB_REPO + "/issues/new?title=" +
+          encodeURIComponent("save: " + clean) + "&body=" + encodeURIComponent("Filed from the Saver."), "_blank", "noopener");
+      } catch (e) {}
+    } else {
+      setStatus("✓ SAVED LOCALLY — WAYBACK SNAPSHOT OPENING IN NEW TAB (LET IT FINISH)", true);
+      try { window.open("https://web.archive.org/save/" + clean, "_blank", "noopener"); } catch (e) {}
+    }
+  }
+
+  function fetchText(url, id) {
+    fetch("https://publish.twitter.com/oembed?omit_script=true&url=" + encodeURIComponent(url))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.html) return;
+        var div = document.createElement("div");
+        div.innerHTML = j.html;
+        var text = (div.textContent || "").replace(/\s+/g, " ").trim();
+        if (!text) return;
+        rows = rows.map(function (r) {
+          return r.id === id ? Object.assign({}, r, { text: text, author: j.author_name || null }) : r;
+        });
+        persist();
+        render();
+      })
+      .catch(function () {});
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function render() {
+    countEl.textContent = String(rows.length);
+    ledgerEl.textContent = "";
+    rows.slice(0, DISPLAY_CAP).forEach(function (r) {
+      var row = el("div", "ledger-row");
+
+      var handle = el("span", "ledger-handle");
+      var hd = el("span", null, "@" + r.handle);
+      if (REDACT_HANDLES) hd.style.filter = "blur(6px)";
+      handle.appendChild(hd);
+      row.appendChild(handle);
+
+      row.appendChild(el("span", "ledger-id", r.id));
+
+      var ticker = el("span", "ledger-ticker");
+      var inner = el("span", "ledger-ticker-inner");
+      var t = r.text
+        ? "“" + r.text + "”" + (r.author ? " — " + r.author : "")
+        : "reading the words back from the archive…";
+      inner.appendChild(el("span", null, t));
+      inner.appendChild(el("span", null, t));
+      ticker.appendChild(inner);
+      row.appendChild(ticker);
+
+      row.appendChild(el("span", "ledger-time", r.time));
+      row.appendChild(el("span", "ledger-saved", "saved ✓"));
+
+      var links = el("span", "ledger-links");
+      [["wayback ↗", "https://web.archive.org/save/" + r.url, "ox"],
+       ["arch.today ↗", "https://archive.ph/?url=" + encodeURIComponent(r.url), "ox"],
+       ["view ↗", "https://web.archive.org/web/2*/" + r.url, "ink"]
+      ].forEach(function (l) {
+        var a = el("a", l[2], l[0]);
+        a.href = l[1];
+        a.target = "_blank";
+        a.rel = "noopener";
+        links.appendChild(a);
+      });
+      row.appendChild(links);
+
+      ledgerEl.appendChild(row);
+    });
+  }
+
+  button.addEventListener("click", saveIt);
+  input.addEventListener("keydown", function (e) { if (e.key === "Enter") saveIt(); });
+
+  // Editor plate: drop any image to replace the bull (local to your browser)
+  var frame = document.getElementById("editorFrame");
+  var img = document.getElementById("editorImg");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    frame.addEventListener(ev, function (e) { e.preventDefault(); frame.classList.add("dragover"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    frame.addEventListener(ev, function (e) { e.preventDefault(); frame.classList.remove("dragover"); });
+  });
+  frame.addEventListener("drop", function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f || f.type.indexOf("image/") !== 0) return;
+    var reader = new FileReader();
+    reader.onload = function () { img.src = reader.result; img.style.objectFit = "cover"; };
+    reader.readAsDataURL(f);
+  });
+})();
+</script>
+</body>
+</html>

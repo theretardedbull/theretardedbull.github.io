@@ -1,0 +1,103 @@
+name: save-tweet
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: write
+  issues: write
+concurrency:
+  group: vault
+  cancel-in-progress: false
+jobs:
+  save:
+    if: ${{ startsWith(github.event.issue.title, 'save:') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse and validate
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const title = context.payload.issue.title || "";
+            const m = title.match(/https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/([A-Za-z0-9_]{1,15})\/status\/(\d+)/i);
+            if (!m) {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
+                body: "❌ Not a valid tweet URL. Issue title must be:\n\n`save: https://x.com/handle/status/1234567890`" });
+              await github.rest.issues.update({ ...context.repo, issue_number: context.issue.number, state: "closed" });
+              return;
+            }
+            const handle = m[1], id = m[2];
+            const clean = "https://x.com/" + handle + "/status/" + id;
+            if (fs.existsSync("vault/" + id + ".json")) {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
+                body: "✅ Already in the vault: `vault/" + id + ".json` — one record per tweet, first save wins." });
+              await github.rest.issues.update({ ...context.repo, issue_number: context.issue.number, state: "closed" });
+              return;
+            }
+            core.setOutput("handle", handle);
+            core.setOutput("id", id);
+            core.setOutput("url", clean);
+
+      - name: Fetch tweet text (official oEmbed, no login)
+        if: ${{ steps.parse.outputs.url }}
+        run: |
+          curl -s --max-time 30 "https://publish.twitter.com/oembed?url=${{ steps.parse.outputs.url }}&omit_script=true" -o oembed.json || echo '{}' > oembed.json
+
+      - name: Request Wayback snapshot
+        if: ${{ steps.parse.outputs.url }}
+        run: |
+          curl -s --max-time 120 -L "https://web.archive.org/save/${{ steps.parse.outputs.url }}" -o /dev/null -w "wayback http %{http_code}\n" || true
+
+      - name: Request archive.today snapshot (best effort)
+        if: ${{ steps.parse.outputs.url }}
+        run: |
+          curl -s --max-time 60 -d "url=${{ steps.parse.outputs.url }}" "https://archive.ph/submit/" -o /dev/null -w "archive.today http %{http_code}\n" || true
+
+      - name: Write vault record
+        if: ${{ steps.parse.outputs.url }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            let oembed = {};
+            try { oembed = JSON.parse(fs.readFileSync("oembed.json", "utf8")); } catch (e) {}
+            const id = "${{ steps.parse.outputs.id }}";
+            const url = "${{ steps.parse.outputs.url }}";
+            const rec = {
+              id: id,
+              handle: "${{ steps.parse.outputs.handle }}",
+              url: url,
+              author_name: oembed.author_name || null,
+              tweet_html: oembed.html || null,
+              tweet_missing_at_save: !oembed.html,
+              saved_at: new Date().toISOString(),
+              submitted_by_issue: context.issue.number,
+              wayback: "https://web.archive.org/web/2*/" + url,
+              archive_today: "https://archive.ph/newest/" + url
+            };
+            fs.mkdirSync("vault", { recursive: true });
+            fs.writeFileSync("vault/" + id + ".json", JSON.stringify(rec, null, 2));
+
+      - name: Commit forever
+        if: ${{ steps.parse.outputs.url }}
+        run: |
+          git config user.name "vault-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add vault/
+          git commit -m "vault: @${{ steps.parse.outputs.handle }} status ${{ steps.parse.outputs.id }}" || exit 0
+          git push
+
+      - name: Receipt and close
+        if: ${{ steps.parse.outputs.url }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const id = "${{ steps.parse.outputs.id }}";
+            const url = "${{ steps.parse.outputs.url }}";
+            const repoUrl = "https://github.com/" + context.repo.owner + "/" + context.repo.repo;
+            await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
+              body: "✅ **Saved forever.**\n\n- Record: " + repoUrl + "/blob/main/vault/" + id + ".json\n- Wayback: https://web.archive.org/web/2*/" + url + "\n- archive.today: https://archive.ph/newest/" + url + "\n\nIf the post gets deleted, these survive." });
+            await github.rest.issues.update({ ...context.repo, issue_number: context.issue.number, state: "closed" });
