@@ -25,3 +25,5 @@ jobs:
           path: .
       - id: deployment
         uses: actions/deploy-pages@v4
+        timeout-minutes: 5
+        continue-on-error: true   # GitHub Pages outages retry silently on the next cron — no alarm emails
