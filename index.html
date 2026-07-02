@@ -78,7 +78,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 .ledger-handle{font-weight:700;flex:none}
 .ledger-id{color:var(--sepia);flex:none}
 .ledger-ticker{flex:1;min-width:0;overflow:hidden;white-space:nowrap;border-left:1px solid var(--rule);border-right:1px solid var(--rule);padding:0 10px}
-.ledger-ticker-inner{display:inline-flex;white-space:nowrap;animation:rrTick 26s linear infinite}
+.ledger-ticker-inner{display:inline-flex;white-space:nowrap}
+.ledger-ticker-inner.tick{animation:rrTick 26s linear infinite;will-change:transform}
 .ledger-ticker-inner span{padding-right:56px}
 .ledger-time{color:var(--sepia);flex:none}
 .ledger-saved{flex:none;font-weight:700}
@@ -89,7 +90,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 
 .footer{border-top:3px double var(--ink);margin-top:26px;padding:12px var(--gutter) calc(16px + env(safe-area-inset-bottom));font-size:11.5px;color:var(--ink-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 
-@keyframes rrTick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes rrTick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 @keyframes rrKen{from{transform:scale(1.01) translate(0,0)}to{transform:scale(1.08) translate(-1.6%,-2.2%)}}
 
 /* Stamp folds into the flow before it can collide with the masthead */
@@ -123,7 +124,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 }
 
 @media (prefers-reduced-motion:reduce){
-  .ledger-ticker-inner{animation:none}
+  .ledger-ticker-inner.tick{animation:none}
   .plate:hover .plate-frame img{animation:none}
   .plate-frame{transition:none}
 }
@@ -180,7 +181,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   var VAULT_API = "";          // vault worker endpoint — set at deploy; empty = wayback-tab fallback mode
   var REDACT_HANDLES = false;  // true → blur all @handles (legal-safe screenshot mode)
 
-  var KEY = "rugreport_vault_v1";
+  var KEY = "rugreport_vault_v2"; // v2: cleared construction-era test entries
   var VISIBLE_ROWS = 10, RENDER_CAP = 200, PERSIST_CAP = 50;
 
   var input = document.getElementById("tweetUrl");
@@ -214,7 +215,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           permanent: true
         };
       });
-      render();
+      scheduleRender();
     })
     .catch(function () {});
 
@@ -352,10 +353,14 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           return r.id === id ? Object.assign({}, r, { text: text, author: j.author_name || null }) : r;
         });
         persist();
-        render();
+        scheduleRender();
       })
       .catch(function () {});
   }
+
+  // Collapse bursts of data arrivals into one repaint so tickers don't restart mid-glide
+  var renderTimer = null;
+  function scheduleRender() { clearTimeout(renderTimer); renderTimer = setTimeout(render, 150); }
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -385,7 +390,6 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
         ? "“" + r.text + "”" + (r.author ? " — " + r.author : "")
         : (r.permanent ? "words not recovered at save time — see the archive links" : "reading the words back from the archive…");
       inner.appendChild(el("span", null, t));
-      inner.appendChild(el("span", null, t));
       ticker.appendChild(inner);
       row.appendChild(ticker);
 
@@ -407,6 +411,17 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       row.appendChild(links);
 
       ledgerEl.appendChild(row);
+    });
+
+    // Tickers scroll only when the words overflow their window, at a constant
+    // per-pixel pace (long posts take longer, nothing sprints or stutters)
+    Array.prototype.forEach.call(ledgerEl.querySelectorAll(".ledger-ticker"), function (tk) {
+      var inner = tk.firstChild;
+      if (!inner || !inner.firstChild) return;
+      if (inner.scrollWidth - 56 <= tk.clientWidth + 2) return; // fits — hold still
+      inner.appendChild(inner.firstChild.cloneNode(true));
+      inner.style.animationDuration = Math.max(14, Math.round(inner.scrollWidth / 2 / 55)) + "s";
+      inner.classList.add("tick");
     });
 
     // 10 rows visible; everything past that scrolls inside the ledger
