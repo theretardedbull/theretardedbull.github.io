@@ -20,6 +20,7 @@
 
 import { uploadToArweave } from "./arweave-lite.js";
 import { renderSnapshotSVG } from "./snapshot-svg.js";
+import { renderReceiptPage } from "./receipt-page.js";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,28 @@ export default {
         headers: { ...CORS, "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" }
       });
     }
+    // ---- the receipt page: the post behind bars, arweave proof underneath ----
+    if (req.method === "GET" && u.pathname.startsWith("/receipt/")) {
+      const rid = (u.pathname.split("/").pop() || "").replace(/\.html$/, "");
+      if (!/^\d{1,25}$/.test(rid)) return json({ ok: false, error: "bad id" }, 400);
+      const cacheKey = new Request(u.origin + "/receipt/" + rid + "?v=1");
+      const hit = await caches.default.match(cacheKey);
+      if (hit) return hit;
+      let rec = null;
+      try {
+        const r = await fetch("https://raw.githubusercontent.com/" + env.REPO + "/main/vault/" + rid + ".json", {
+          headers: { "user-agent": "gazette-vault-worker" }
+        });
+        if (r.ok) rec = await r.json();
+      } catch (e) {}
+      if (!rec) return json({ ok: false, error: "not in vault" }, 404);
+      const resp = new Response(renderReceiptPage(rec), {
+        headers: { ...CORS, "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" }
+      });
+      ctx.waitUntil(caches.default.put(cacheKey, resp.clone()));
+      return resp;
+    }
+
     // ---- live ledger: straight from git, no Pages deploy in the path ----
     if (req.method === "GET" && u.pathname === "/ledger") {
       try {
@@ -181,7 +204,7 @@ export default {
     }
 
     // ---- 3. post data: FxTwitter primary (keyless, no captcha, full JSON), oEmbed fallback ----
-    let text = null, author = null, postedAt = null, tweetHtml = null, avatarUrl = null, photo = null;
+    let text = null, author = null, postedAt = null, tweetHtml = null, avatarUrl = null, photo = null, stats = null;
     try {
       const r = await fetch("https://api.fxtwitter.com/" + handle + "/status/" + id, {
         headers: { "user-agent": "gazette-vault-worker" }
@@ -197,6 +220,10 @@ export default {
           avatarUrl = (t.author && t.author.avatar_url) || null;
           const ph = t.media && t.media.photos && t.media.photos[0];
           photo = ph ? { url: ph.url, width: ph.width || 0, height: ph.height || 0 } : null;
+          stats = {
+            replies: t.replies ?? null, reposts: t.retweets ?? null,
+            likes: t.likes ?? null, views: t.views ?? null
+          };
         }
       } else warnings.push("fxtwitter http " + r.status);
     } catch (e) { warnings.push("fxtwitter unreachable"); }
@@ -246,6 +273,7 @@ export default {
       snapshot: base + "/snapshot/" + id + ".svg",
       avatar_url: avatarUrl,
       photo: photo,
+      stats: stats,
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
