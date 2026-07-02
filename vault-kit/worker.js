@@ -178,7 +178,7 @@ export default {
     if (await caches.default.match(coolKey)) {
       return json({ ok: false, error: "easy, editor — one filing per 10 seconds" }, 429);
     }
-    ctx.waitUntil(caches.default.put(coolKey, new Response("1", { headers: { "cache-control": "max-age=10" } })));
+    await caches.default.put(coolKey, new Response("1", { headers: { "cache-control": "max-age=10" } }));
 
     // ---- 0. validate (reject anything that isn't a tweet URL) ----
     let body = {};
