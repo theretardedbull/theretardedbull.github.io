@@ -55,26 +55,25 @@ export default {
         headers: { ...CORS, "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" }
       });
     }
-    // ---- the receipt page: the post behind bars, arweave proof underneath ----
+    // ---- receipt pages live on the site itself; old worker links funnel there ----
     if (req.method === "GET" && u.pathname.startsWith("/receipt/")) {
       const rid = (u.pathname.split("/").pop() || "").replace(/\.html$/, "");
+      return Response.redirect((env.SITE_BASE || "https://theretardedbull.xyz") + "/receipt.html?id=" + rid, 302);
+    }
+
+    // ---- single record, fresh from git (feeds the site's receipt page) ----
+    if (req.method === "GET" && u.pathname.startsWith("/record/")) {
+      const rid = (u.pathname.split("/").pop() || "").replace(/\.json$/, "");
       if (!/^\d{1,25}$/.test(rid)) return json({ ok: false, error: "bad id" }, 400);
-      const cacheKey = new Request(u.origin + "/receipt/" + rid + "?v=1");
-      const hit = await caches.default.match(cacheKey);
-      if (hit) return hit;
-      let rec = null;
       try {
         const r = await fetch("https://raw.githubusercontent.com/" + env.REPO + "/main/vault/" + rid + ".json", {
           headers: { "user-agent": "gazette-vault-worker" }
         });
-        if (r.ok) rec = await r.json();
+        if (r.ok) return new Response(await r.text(), {
+          headers: { ...CORS, "content-type": "application/json", "cache-control": "no-store" }
+        });
       } catch (e) {}
-      if (!rec) return json({ ok: false, error: "not in vault" }, 404);
-      const resp = new Response(renderReceiptPage(rec), {
-        headers: { ...CORS, "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" }
-      });
-      ctx.waitUntil(caches.default.put(cacheKey, resp.clone()));
-      return resp;
+      return json({ ok: false, error: "not in vault" }, 404);
     }
 
     // ---- live ledger: straight from git, no Pages deploy in the path ----

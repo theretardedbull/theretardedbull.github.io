@@ -411,7 +411,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 
       var links = el("span", "ledger-links");
       var linkDefs = [];
-      if (r.permanent) linkDefs.push(["receipt ↗", VAULT_API ? VAULT_API + "/receipt/" + r.id : (r.arweave || "/vault/" + r.id + ".json"), "ox"]);
+      if (r.permanent) linkDefs.push(["receipt ↗", "receipt.html?id=" + r.id, "ox"]);
       linkDefs.concat([
        ["post ↗", r.url, "ink"]
       ]).forEach(function (l) {

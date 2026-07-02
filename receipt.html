@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Receipt — The Retarded Bull Gazette</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="bull-editor.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#231d14; --ink-muted:#3d3426; --sepia:#5c4f38; --rule:#d8cba6;
+  --oxblood:#7a1f1f; --paper-card:#fbf6e8; --paper-panel:#f2ead2; --cream:#f0e6cd;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',Georgia,serif}
+.sheet{max-width:1240px;margin:0 auto;min-height:100vh;min-height:100dvh;
+  background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7dab9 100%);
+  display:flex;flex-direction:column;align-items:center;padding:26px clamp(14px,3vw,40px) 60px}
+.mast{font-size:clamp(22px,4vw,30px);font-weight:700;font-variant:small-caps;line-height:1.1;text-align:center}
+.mast a{color:inherit;text-decoration:none}
+.case{font-family:'IBM Plex Mono',monospace;font-size:clamp(10px,1.8vw,13px);letter-spacing:.08em;
+  color:var(--ink-muted);margin:8px 0 26px;text-align:center;text-transform:uppercase}
+
+.cell{position:relative;width:min(720px,100%);padding:26px clamp(18px,6vw,60px);display:flex;justify-content:center}
+.bars{position:absolute;inset:0;display:flex;justify-content:space-between;padding:0 10px;z-index:1;pointer-events:none}
+.bars i{width:13px;border-radius:7px;
+  background:linear-gradient(90deg,#17120b 0%,#453a28 42%,#71614a 50%,#453a28 58%,#17120b 100%);
+  box-shadow:3px 0 7px rgba(20,15,8,.3)}
+.rail{position:absolute;left:-6px;right:-6px;height:15px;border-radius:8px;z-index:3;pointer-events:none;
+  background:linear-gradient(180deg,#17120b 0%,#453a28 40%,#71614a 50%,#453a28 60%,#17120b 100%);
+  box-shadow:0 4px 8px rgba(20,15,8,.3)}
+.rail.top{top:0}.rail.bot{bottom:0}
+.gotcha{position:absolute;top:-10px;right:-8px;transform:rotate(-9deg);z-index:5;
+  border:3.5px solid var(--oxblood);color:var(--oxblood);font-family:'IBM Plex Mono',monospace;font-weight:600;
+  font-size:clamp(17px,3.4vw,26px);letter-spacing:.22em;padding:6px 16px;background:rgba(251,246,232,.94);
+  box-shadow:4px 5px 0 rgba(35,29,20,.28)}
+
+.card{position:relative;z-index:2;background:#fff;border:1px solid #e3e6e8;border-radius:16px;width:min(560px,100%);
+  padding:18px 20px 14px;box-shadow:0 10px 26px rgba(35,29,20,.30);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.head{display:flex;align-items:center;gap:10px}
+.av{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none;background:#eee}
+.avf{width:48px;height:48px;border-radius:50%;flex:none;background:var(--oxblood);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.who{flex:1;min-width:0;line-height:1.25}
+.nm{font-weight:700;font-size:15.5px;color:#0f1419;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd{font-size:15px;color:#536471}
+.xmark{font-size:22px;color:#0f1419;font-weight:700;flex:none}
+.txt{font-size:23px;line-height:1.35;color:#0f1419;margin-top:14px;overflow-wrap:break-word;white-space:pre-wrap}
+.txt.small{font-size:17px}
+.txt.missing{color:#536471;font-style:italic;font-size:17px}
+.ph{margin-top:14px;width:100%;border-radius:16px;border:1px solid #e3e6e8;display:block}
+.when{margin-top:14px;font-size:15px;color:#536471}
+.stats{margin-top:10px;padding-top:10px;border-top:1px solid #eff3f4;font-size:14px;color:#536471}
+.stats span{margin-right:14px}
+.stats b{color:#0f1419;font-weight:700}
+
+.proof{width:min(720px,100%);margin-top:26px;border:2px dashed var(--ink);background:var(--paper-panel);
+  padding:16px clamp(14px,3vw,22px);font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.8;color:var(--ink)}
+.proof .stamp{display:inline-block;border:2.5px solid var(--oxblood);color:var(--oxblood);
+  background:rgba(251,246,232,.9);padding:4px 12px;font-weight:600;letter-spacing:.16em;font-size:12px;
+  transform:rotate(-1.5deg);margin-bottom:10px}
+.araddr{display:block;font-size:clamp(11px,2.4vw,15px);font-weight:600;letter-spacing:.02em;
+  color:var(--oxblood);word-break:break-all;text-decoration:underline;margin:2px 0 8px}
+.proof .muted{color:var(--sepia)}
+.proof a{color:var(--oxblood);word-break:break-all}
+.foot{margin-top:24px;font-size:12.5px;color:var(--ink-muted);font-style:italic;text-align:center}
+.foot a{color:var(--ink)}
+.err{font-family:'Special Elite',monospace;margin-top:40px;text-align:center;font-size:15px}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="mast"><a href="/">The Retarded Bull Gazette</a></div>
+  <div class="case" id="caseLine">RETRIEVING THE FILE…</div>
+
+  <div class="cell" id="cell" style="display:none">
+    <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="rail top"></div>
+    <div class="card" id="card"></div>
+    <div class="rail bot"></div>
+    <div class="gotcha">GOTCHA</div>
+  </div>
+
+  <div class="proof" id="proof" style="display:none">
+    <span class="stamp">FOREVER MEANS ARWEAVE</span><br>
+    <span class="muted">this record is sealed on the arweave permanent network at address:</span>
+    <a class="araddr" id="arAddr" target="_blank" rel="noopener"></a>
+    <span class="muted" id="meta"></span><br>
+    <span class="muted">once filed, the delete button can't reach it.</span>
+  </div>
+
+  <div class="err" id="err" style="display:none">nothing in the vault under that number — <a href="/">back to the front page</a></div>
+
+  <div class="foot">a document, not a verdict — <a href="/">theretardedbull.xyz</a></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var VAULT_API = "https://gazette-vault.theretardedbull.workers.dev";
+  var id = new URLSearchParams(location.search).get("id") || "";
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function fail() {
+    document.getElementById("caseLine").textContent = "FILE NOT FOUND";
+    document.getElementById("err").style.display = "block";
+  }
+  if (!/^\d{1,25}$/.test(id)) { fail(); return; }
+
+  fetch(VAULT_API + "/record/" + id + "?fresh=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rec) {
+      if (!rec || !rec.id) { fail(); return; }
+      document.title = "@" + rec.handle + " — receipt · The Retarded Bull Gazette";
+      document.getElementById("caseLine").textContent =
+        "CASE №" + rec.id + " · THE PEOPLE OF SOL YORK vs @" + rec.handle;
+
+      var card = document.getElementById("card");
+      var head = el("div", "head");
+      if (rec.avatar_url) {
+        var av = el("img", "av");
+        av.src = rec.avatar_url.replace("_normal", "_200x200");
+        av.alt = "";
+        av.onerror = function () { var f = el("div", "avf", (rec.handle || "?")[0].toUpperCase()); av.replaceWith(f); };
+        head.appendChild(av);
+      } else {
+        head.appendChild(el("div", "avf", (rec.handle || "?")[0].toUpperCase()));
+      }
+      var who = el("div", "who");
+      var display = rec.author_name && rec.author_name !== "@" + rec.handle ? rec.author_name : rec.handle;
+      who.appendChild(el("div", "nm", display));
+      who.appendChild(el("div", "hd", "@" + rec.handle));
+      head.appendChild(who);
+      head.appendChild(el("span", "xmark", "𝕏"));
+      card.appendChild(head);
+
+      var txt = el("div", "txt" + ((rec.text || "").length > 130 ? " small" : "") + (rec.text ? "" : " missing"),
+        rec.text || "The words were already gone when the editor arrived — but the filing stands.");
+      card.appendChild(txt);
+
+      if (rec.photo && rec.photo.url) {
+        var ph = el("img", "ph");
+        ph.src = rec.photo.url;
+        ph.alt = "";
+        ph.onerror = function () { ph.remove(); };
+        card.appendChild(ph);
+      }
+
+      var d = rec.posted_at ? new Date(rec.posted_at) : null;
+      card.appendChild(el("div", "when", d && !isNaN(d)
+        ? d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" }) + " · " +
+          d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) + " · UTC"
+        : "time unrecovered"));
+
+      var s = rec.stats || {};
+      function fmtN(n){ if(n==null) return null; if(n>=1e6) return (n/1e6).toFixed(1).replace(/\.0$/,"")+"M"; if(n>=1e3) return (n/1e3).toFixed(1).replace(/\.0$/,"")+"K"; return String(n); }
+      var pairs = [["replies", s.replies], ["reposts", s.reposts], ["likes", s.likes], ["views", s.views]].filter(function (p) { return p[1] != null; });
+      if (pairs.length) {
+        var st = el("div", "stats");
+        pairs.forEach(function (p) {
+          var sp = el("span");
+          sp.appendChild(el("b", null, fmtN(p[1])));
+          sp.appendChild(document.createTextNode(" " + p[0]));
+          st.appendChild(sp);
+        });
+        card.appendChild(st);
+      }
+
+      var tx = rec.arweave_tx || (rec.arweave || "").split("/").pop() || "";
+      var addr = document.getElementById("arAddr");
+      addr.textContent = "ar://" + tx;
+      addr.href = rec.arweave || (VAULT_API + "/ar/" + tx);
+      var meta = document.getElementById("meta");
+      meta.textContent = "posted " + (rec.posted_at || "?") + " · filed " + (rec.saved_at || "?") + " · original: " + rec.url;
+
+      document.getElementById("cell").style.display = "flex";
+      document.getElementById("proof").style.display = "block";
+    })
+    .catch(fail);
+})();
+</script>
+</body>
+</html>
