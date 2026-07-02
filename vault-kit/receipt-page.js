@@ -25,13 +25,15 @@ function fmtNum(n) {
 }
 
 export function renderReceiptPage(rec) {
+  const pid = rec.post_id || rec.id;
+  const avatarUrl = rec.author_avatar || rec.avatar_url;
   const name = rec.author_name && rec.author_name !== "@" + rec.handle ? rec.author_name : rec.handle;
   const textHtml = esc(rec.text || "")
     .split(/\n/).map((l) => l || "&nbsp;").join("<br>");
   const missing = !rec.text;
   const initial = (rec.handle || "?").slice(0, 1).toUpperCase();
-  const avatar = rec.avatar_url
-    ? `<img class="av" src="${esc(rec.avatar_url.replace("_normal", "_200x200"))}" alt="" onerror="this.outerHTML='<div class=&quot;av avf&quot;>${esc(initial)}</div>'">`
+  const avatar = avatarUrl
+    ? `<img class="av" src="${esc(avatarUrl.replace("_normal", "_200x200"))}" alt="" onerror="this.outerHTML='<div class=&quot;av avf&quot;>${esc(initial)}</div>'">`
     : `<div class="av avf">${esc(initial)}</div>`;
   const photo = rec.photo && rec.photo.url
     ? `<img class="ph" src="${esc(rec.photo.url)}" alt="" onerror="this.remove()">`
@@ -102,7 +104,7 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
 </head>
 <body>
   <div class="mast">The Retarded Bull Gazette</div>
-  <div class="case">CASE №${esc(rec.id)} · THE PEOPLE OF SOL YORK vs @${esc(rec.handle)}</div>
+  <div class="case">CASE №${esc(pid)} · THE PEOPLE OF SOL YORK vs @${esc(rec.handle)}</div>
 
   <div class="cell">
   <div class="rail top"></div>
@@ -128,7 +130,7 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
   <div class="proof">
     <span class="stamp">FOREVER MEANS ARWEAVE</span><br>
     <span class="muted">this record is sealed on the arweave permanent network at address:</span><br>
-    <a href="${esc(rec.arweave || "#")}" style="font-size:15px;font-weight:700">ar://${esc(arTx || "")}</a><br>
+    <a href="https://arweave.net/${esc(arTx || "")}" style="font-size:15px;font-weight:700">https://arweave.net/${esc(arTx || "")}</a><br>
     <span class="muted">posted ${esc(rec.posted_at || "?")} · filed ${esc(rec.saved_at || "?")} · original: </span><a href="${esc(rec.url)}">${esc(rec.url)}</a><br>
     <span class="muted">once filed, the delete button can't reach it.</span>
   </div>
