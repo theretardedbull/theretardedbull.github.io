@@ -293,7 +293,7 @@ export default {
     if (env.ARWEAVE_KEY) {
       try {
         const key = Uint8Array.from(JSON.parse(env.ARWEAVE_KEY));
-        const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(rec, null, 1)), [
+        const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(rec)), [
           { name: "Content-Type", value: "application/json" },
           { name: "App-Name", value: "retarded-bull-gazette" },
           { name: "Type", value: "post-receipt" },
@@ -419,7 +419,7 @@ export default {
             const clean = Object.assign({}, rec);
             delete clean.arweave; delete clean.arweave_tx; delete clean.arweave_deadline_height;
             delete clean.arweave_block; delete clean.arweave_bundle;
-            const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(clean, null, 1)), [
+            const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(clean)), [
               { name: "Content-Type", value: "application/json" },
               { name: "App-Name", value: "retarded-bull-gazette" },
               { name: "Type", value: "post-receipt" },
