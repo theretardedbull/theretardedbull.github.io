@@ -38,11 +38,13 @@ export default {
 
     // ---- read endpoints ----
     if (req.method === "GET" && u.pathname.startsWith("/vault/")) {
+      if (!env.BUCKET) return Response.redirect((env.SITE_BASE || "https://theretardedbull.xyz") + u.pathname, 302);
       const obj = await env.BUCKET.get("vault/" + u.pathname.split("/").pop());
       if (!obj) return json({ ok: false, error: "not in vault" }, 404);
       return new Response(obj.body, { headers: { ...CORS, "content-type": "application/json" } });
     }
     if (req.method === "GET" && u.pathname.startsWith("/shot/")) {
+      if (!env.BUCKET) return new Response("image pipeline not configured", { status: 404, headers: CORS });
       const obj = await env.BUCKET.get("shots/" + u.pathname.split("/").pop());
       if (!obj) return new Response("not found", { status: 404, headers: CORS });
       return new Response(obj.body, {
@@ -60,11 +62,24 @@ export default {
     const clean = "https://x.com/" + handle + "/status/" + id;
     const base = (env.PUBLIC_BASE || u.origin).replace(/\/$/, "");
 
-    // ---- 1. dedupe: one record per tweet, first save wins ----
-    const existing = await env.BUCKET.get("vault/" + id + ".json");
-    if (existing) {
-      const rec = JSON.parse(await existing.text());
-      return json({ ok: true, duplicate: true, ...rec });
+    const gh = (path, init) => fetch("https://api.github.com/repos/" + env.REPO + "/contents/" + path, Object.assign({}, init, {
+      headers: Object.assign({
+        "authorization": "Bearer " + env.GH_TOKEN,
+        "user-agent": "rug-vault-worker",
+        "accept": "application/vnd.github+json"
+      }, (init && init.headers) || {})
+    }));
+
+    // ---- 1. dedupe: one record per post, first save wins ----
+    if (env.BUCKET) {
+      const existing = await env.BUCKET.get("vault/" + id + ".json");
+      if (existing) {
+        const rec = JSON.parse(await existing.text());
+        return json({ ok: true, duplicate: true, ...rec });
+      }
+    } else if (env.GH_TOKEN && env.REPO) {
+      const existing = await gh("vault/" + id + ".json?ref=main");
+      if (existing.ok) return json({ ok: true, duplicate: true, id: id, record: "/vault/" + id + ".json" });
     }
 
     const warnings = [];
@@ -72,21 +87,23 @@ export default {
     // ---- 2. screenshot via ScreenshotOne (renders the official embed page — no login wall) ----
     let imageSaved = false;
     const embedUrl = "https://platform.twitter.com/embed/Tweet.html?dnt=true&theme=light&width=550&id=" + id;
-    const shotApi = "https://api.screenshotone.com/take"
-      + "?access_key=" + env.SCREENSHOTONE_KEY
-      + "&url=" + encodeURIComponent(embedUrl)
-      + "&format=png&viewport_width=600&viewport_height=900&device_scale_factor=2"
-      + "&delay=4&full_page=true&block_ads=true&block_cookie_banners=true";
-    try {
-      const r = await fetch(shotApi);
-      if (r.ok) {
-        await env.BUCKET.put("shots/" + id + ".png", r.body, { httpMetadata: { contentType: "image/png" } });
-        imageSaved = true;
-      } else {
-        warnings.push("screenshot failed: http " + r.status + " — retry later via POST again after deleting vault/" + id + ".json");
+    if (env.SCREENSHOTONE_KEY && env.BUCKET) { // optional image pipeline — dormant in text-only mode
+      const shotApi = "https://api.screenshotone.com/take"
+        + "?access_key=" + env.SCREENSHOTONE_KEY
+        + "&url=" + encodeURIComponent(embedUrl)
+        + "&format=png&viewport_width=600&viewport_height=900&device_scale_factor=2"
+        + "&delay=4&full_page=true&block_ads=true&block_cookie_banners=true";
+      try {
+        const r = await fetch(shotApi);
+        if (r.ok) {
+          await env.BUCKET.put("shots/" + id + ".png", r.body, { httpMetadata: { contentType: "image/png" } });
+          imageSaved = true;
+        } else {
+          warnings.push("screenshot failed: http " + r.status + " — retry later via POST again after deleting vault/" + id + ".json");
+        }
+      } catch (e) {
+        warnings.push("screenshot error: " + (e && e.message));
       }
-    } catch (e) {
-      warnings.push("screenshot error: " + (e && e.message));
     }
 
     // ---- 3. post data: FxTwitter primary (keyless, no captcha, full JSON), oEmbed fallback ----
@@ -151,6 +168,9 @@ export default {
       posted_at: postedAt,
       saved_at: new Date().toISOString(),
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
+      view_url: imageSaved
+        ? base + "/shot/" + id + ".png"
+        : (env.WAYBACK_KEYS ? "https://web.archive.org/web/" + embedUrl : "https://archive.ph/newest/" + clean),
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
@@ -160,21 +180,16 @@ export default {
       archive_today: "https://archive.ph/newest/" + clean,
       pipeline_version: 4
     };
-    await env.BUCKET.put("vault/" + id + ".json", JSON.stringify(rec, null, 2), {
-      httpMetadata: { contentType: "application/json" }
-    });
+    if (env.BUCKET) {
+      await env.BUCKET.put("vault/" + id + ".json", JSON.stringify(rec, null, 2), {
+        httpMetadata: { contentType: "application/json" }
+      });
+    }
 
     // ---- 6. tamper-evident receipts in git: the record + the public ledger index ----
     // Awaited (not fire-and-forget): the site's shared ledger is built from these files,
     // so a git failure must surface in warnings, never pass silently.
     if (env.GH_TOKEN && env.REPO) {
-      const gh = (path, init) => fetch("https://api.github.com/repos/" + env.REPO + "/contents/" + path, Object.assign({}, init, {
-        headers: Object.assign({
-          "authorization": "Bearer " + env.GH_TOKEN,
-          "user-agent": "rug-vault-worker",
-          "accept": "application/vnd.github+json"
-        }, (init && init.headers) || {})
-      }));
       const b64e = (s) => btoa(unescape(encodeURIComponent(s)));
       const b64d = (s) => decodeURIComponent(escape(atob(String(s).replace(/\n/g, ""))));
       const put = (path, content, sha, note) => gh(path, {
@@ -191,6 +206,7 @@ export default {
         const entry = {
           id: id, handle: handle, url: clean,
           author_name: rec.author_name, text: text, image: rec.image,
+          view_url: rec.view_url,
           posted_at: rec.posted_at, saved_at: rec.saved_at,
           tweet_missing_at_save: rec.tweet_missing_at_save
         };
