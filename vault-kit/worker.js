@@ -58,7 +58,7 @@ export default {
     if (req.method === "GET" && u.pathname.startsWith("/snapshot/")) {
       const sid = (u.pathname.split("/").pop() || "").replace(/\.svg$/, "");
       if (!/^\d{1,25}$/.test(sid)) return json({ ok: false, error: "bad id" }, 400);
-      const cacheKey = new Request(u.origin + "/snapshot/" + sid + ".svg?v=2");
+      const cacheKey = new Request(u.origin + "/snapshot/" + sid + ".svg?v=3");
       const hit = await caches.default.match(cacheKey);
       if (hit) return hit;
       let rec = null;

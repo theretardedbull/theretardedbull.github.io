@@ -29,7 +29,7 @@ function wrap(text, width) {
     }
     if (line) out.push(line);
   }
-  return out.length ? out : ["(no words recovered)"];
+  return out.some((l) => l.trim()) ? out : ["(no words recovered — the post was already gone when filed)"];
 }
 
 async function toDataUri(url, maxBytes) {
