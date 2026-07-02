@@ -202,7 +202,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   var globalRows = [];
 
   // The public vault — one shared ledger, same for every visitor, committed forever in git
-  fetch("/vault/index.json")
+  fetch("/vault/index.json?fresh=" + Date.now(), { cache: "no-store" })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (list) {
       if (!Array.isArray(list)) return;
