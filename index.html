@@ -278,8 +278,16 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     try { localStorage.setItem(KEY, JSON.stringify(rows.slice(0, PERSIST_CAP))); } catch (e) {}
   }
 
-  function setStatus(msg, ok) {
+  function setStatus(msg, ok, href, label) {
     statusEl.textContent = msg;
+    if (href) {
+      statusEl.appendChild(document.createTextNode("  "));
+      var a = el("a", null, label || href);
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noopener";
+      statusEl.appendChild(a);
+    }
     statusEl.className = "saver-status" + (ok === false ? " err" : "");
   }
 
@@ -327,7 +335,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           persist();
           render();
           if (j.duplicate) { setStatus(dupeLine(), false); return; }
-          setStatus("✓ FILED FOREVER — RECEIPT №" + id + " COMMITTED TO THE VAULT", true);
+          setStatus("✓ FILED FOREVER — RECEIPT №" + id + " IN THE VAULT. ONE LAST STAMP:", true,
+            "https://archive.ph/?url=" + encodeURIComponent(clean), "PRESS SAVE AT ARCHIVE.TODAY ↗");
         })
         .catch(function () {
           rows = rows.filter(function (r) { return r.id !== id; });

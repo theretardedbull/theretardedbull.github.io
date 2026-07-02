@@ -173,7 +173,7 @@ export default {
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
       view_url: imageSaved
         ? base + "/shot/" + id + ".png"
-        : "https://github.com/" + (env.REPO || "") + "/blob/main/vault/" + id + ".json",
+        : "https://archive.today/newest/" + clean,
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
