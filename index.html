@@ -208,7 +208,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       globalRows = list.map(function (rec) {
         return {
           handle: rec.handle, id: rec.id, url: rec.url,
-          time: fmtWhen(rec.saved_at),
+          posted: rec.posted_at || postedAtFromId(rec.id),
           text: rec.text || null, author: rec.author_name || null,
           image: rec.image || null,
           permanent: true
@@ -222,9 +222,16 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     if (!iso) return "";
     var d = new Date(iso);
     if (isNaN(d)) return "";
-    return d.toDateString() === new Date().toDateString()
-      ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    var now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("en-US", d.getFullYear() === now.getFullYear()
+      ? { month: "short", day: "numeric" }
+      : { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  // X post ids are snowflakes — the id itself encodes when the post was made
+  function postedAtFromId(id) {
+    try { return new Date(Number((BigInt(id) >> 22n) + 1288834974657n)).toISOString(); } catch (e) { return null; }
   }
 
   // Local saves not yet committed to the public vault, newest first, then the vault
@@ -283,7 +290,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     var clean = "https://x.com/" + handle + "/status/" + id;
     rows.unshift({
       handle: handle, id: id, url: clean,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      posted: postedAtFromId(id),
       status: "SAVED"
     });
     rows = rows.slice(0, PERSIST_CAP);
@@ -297,7 +304,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
         .then(function (j) {
           if (!j || !j.ok) throw new Error("vault refused");
           rows = rows.map(function (r) {
-            return r.id === id ? Object.assign({}, r, { text: j.text || r.text, author: j.author_name || r.author, image: j.image || null, permanent: true }) : r;
+            return r.id === id ? Object.assign({}, r, { text: j.text || r.text, author: j.author_name || r.author, image: j.image || null, posted: j.posted_at || r.posted, permanent: true }) : r;
           });
           persist();
           render();
@@ -307,13 +314,13 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
         })
         .catch(function () {
           fetchText(clean, id);
-          setStatus("✓ SAVED LOCALLY — VAULT UNREACHABLE, WAYBACK SNAPSHOT OPENING IN NEW TAB", true);
-          try { window.open("https://web.archive.org/save/" + clean, "_blank", "noopener"); } catch (e) {}
+          setStatus("✓ SAVED LOCALLY — VAULT UNREACHABLE; ARCHIVE.TODAY OPENING IN NEW TAB — PRESS ITS SAVE BUTTON", true);
+          try { window.open("https://archive.ph/?url=" + encodeURIComponent(clean), "_blank", "noopener"); } catch (e) {}
         });
     } else {
       fetchText(clean, id);
-      setStatus("✓ SAVED LOCALLY — WAYBACK SNAPSHOT OPENING IN NEW TAB (LET IT FINISH)", true);
-      try { window.open("https://web.archive.org/save/" + clean, "_blank", "noopener"); } catch (e) {}
+      setStatus("✓ SAVED LOCALLY — ARCHIVE.TODAY OPENING IN NEW TAB — PRESS ITS SAVE BUTTON TO FILE THE PROOF", true);
+      try { window.open("https://archive.ph/?url=" + encodeURIComponent(clean), "_blank", "noopener"); } catch (e) {}
     }
   }
 
@@ -324,7 +331,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
         if (!j || !j.html) return;
         var div = document.createElement("div");
         div.innerHTML = j.html;
-        var text = (div.textContent || "").replace(/\s+/g, " ").trim();
+        var text = (div.textContent || "").replace(/\s+/g, " ").trim()
+          .replace(/\s*—\s*.{0,60}\(@[A-Za-z0-9_]{1,15}\)\s+\w+ \d{1,2}, \d{4}\s*$/, "");
         if (!text) return;
         rows = rows.map(function (r) {
           return r.id === id ? Object.assign({}, r, { text: text, author: j.author_name || null }) : r;
@@ -367,7 +375,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       ticker.appendChild(inner);
       row.appendChild(ticker);
 
-      row.appendChild(el("span", "ledger-time", r.time));
+      row.appendChild(el("span", "ledger-time", r.posted ? fmtWhen(r.posted) : (r.time || "—")));
       row.appendChild(el("span", "ledger-saved", "saved ✓"));
 
       var links = el("span", "ledger-links");
@@ -375,9 +383,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       if (r.permanent) linkDefs.push(["receipt ↗", "/vault/" + r.id + ".json", "ox"]);
       if (r.image) linkDefs.push(["exhibit ↗", r.image, "ox"]);
       linkDefs.concat([
-       ["wayback ↗", "https://web.archive.org/save/" + r.url, "ox"],
        ["arch.today ↗", "https://archive.ph/?url=" + encodeURIComponent(r.url), "ox"],
-       ["view ↗", "https://web.archive.org/web/2*/" + r.url, "ink"]
+       ["post ↗", r.url, "ink"]
       ]).forEach(function (l) {
         var a = el("a", l[2], l[0]);
         a.href = l[1];

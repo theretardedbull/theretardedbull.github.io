@@ -89,19 +89,43 @@ export default {
       warnings.push("screenshot error: " + (e && e.message));
     }
 
-    // ---- 3. tweet text via official oEmbed (no login, no key) ----
-    let oembed = null;
+    // ---- 3. post data: FxTwitter primary (keyless, no captcha, full JSON), oEmbed fallback ----
+    let text = null, author = null, postedAt = null, tweetHtml = null;
     try {
-      const r = await fetch("https://publish.twitter.com/oembed?omit_script=true&url=" + encodeURIComponent(clean));
-      if (r.ok) oembed = await r.json();
-      else warnings.push("oembed http " + r.status + " — tweet may already be deleted; archives may still have it");
-    } catch (e) {
-      warnings.push("oembed error");
+      const r = await fetch("https://api.fxtwitter.com/" + handle + "/status/" + id, {
+        headers: { "user-agent": "gazette-vault-worker" }
+      });
+      if (r.ok) {
+        const j = await r.json();
+        const t = j && j.tweet;
+        if (t) {
+          text = t.text || null;
+          const nm = t.author && t.author.name;
+          author = (nm && nm.replace(/[\s.]/g, "").length ? nm : null) || (t.author && t.author.screen_name ? "@" + t.author.screen_name : null);
+          if (t.created_timestamp) postedAt = new Date(t.created_timestamp * 1000).toISOString();
+        }
+      } else warnings.push("fxtwitter http " + r.status);
+    } catch (e) { warnings.push("fxtwitter unreachable"); }
+    if (!text) {
+      try {
+        const r = await fetch("https://publish.twitter.com/oembed?omit_script=true&url=" + encodeURIComponent(clean));
+        if (r.ok) {
+          const o = await r.json();
+          tweetHtml = (o && o.html) || null;
+          author = author || (o && o.author_name) || null;
+          text = tweetHtml ? tweetHtml.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : null;
+        }
+      } catch (e) {}
+      if (!text) warnings.push("post text unavailable (fxtwitter + oembed) — may already be deleted; archives may have it");
+    }
+    // X ids are snowflakes: the id itself encodes the original post time (fallback source)
+    if (!postedAt) {
+      try { postedAt = new Date(Number((BigInt(id) >> 22n) + 1288834974657n)).toISOString(); } catch (e) {}
     }
 
-    // ---- 4. third-party archives (never block the save) ----
-    // With WAYBACK_KEYS ("access:secret" from archive.org account settings) this uses the
-    // official authenticated Save Page Now API — reliable, rate-limit-friendly, job-tracked.
+    // ---- 4. third-party archives (best-effort bonus copies; never block the save) ----
+    // X blocks archive crawlers on x.com post pages, so Wayback targets the PUBLIC embed
+    // page instead — and only via the authenticated Save Page Now API (keys make it reliable).
     if (env.WAYBACK_KEYS) {
       ctx.waitUntil(fetch("https://web.archive.org/save", {
         method: "POST",
@@ -110,10 +134,8 @@ export default {
           "accept": "application/json",
           "content-type": "application/x-www-form-urlencoded"
         },
-        body: "url=" + encodeURIComponent(clean)
+        body: "url=" + encodeURIComponent(embedUrl)
       }).catch(function () {}));
-    } else {
-      ctx.waitUntil(fetch("https://web.archive.org/save/" + clean).catch(function () {}));
     }
     ctx.waitUntil(fetch("https://archive.ph/submit/", {
       method: "POST",
@@ -122,24 +144,21 @@ export default {
     }).catch(function () {}));
 
     // ---- 5. the permanent record ----
-    const text = oembed && oembed.html
-      ? oembed.html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-      : null;
     const rec = {
       id: id,
       handle: handle,
       url: clean,
+      posted_at: postedAt,
       saved_at: new Date().toISOString(),
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
-      author_name: oembed && oembed.author_name || null,
+      author_name: author,
       text: text,
-      tweet_html: oembed && oembed.html || null,
-      tweet_missing_at_save: !(oembed && oembed.html),
-      wayback: "https://web.archive.org/web/2*/" + clean,
+      tweet_html: tweetHtml,
+      tweet_missing_at_save: !text,
       archive_today: "https://archive.ph/newest/" + clean,
-      pipeline_version: 3
+      pipeline_version: 4
     };
     await env.BUCKET.put("vault/" + id + ".json", JSON.stringify(rec, null, 2), {
       httpMetadata: { contentType: "application/json" }
@@ -172,7 +191,8 @@ export default {
         const entry = {
           id: id, handle: handle, url: clean,
           author_name: rec.author_name, text: text, image: rec.image,
-          saved_at: rec.saved_at, tweet_missing_at_save: rec.tweet_missing_at_save
+          posted_at: rec.posted_at, saved_at: rec.saved_at,
+          tweet_missing_at_save: rec.tweet_missing_at_save
         };
         for (let attempt = 0; attempt < 2; attempt++) {
           const cur = await gh("vault/index.json?ref=main");
