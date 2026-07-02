@@ -86,7 +86,8 @@ export default {
 
     // ---- 2. screenshot via ScreenshotOne (renders the official embed page — no login wall) ----
     let imageSaved = false;
-    const embedUrl = "https://platform.twitter.com/embed/Tweet.html?dnt=true&theme=light&width=550&id=" + id;
+    // Single query param on purpose: ampersand-free URLs survive Wayback's path-style /save/ endpoint
+    const embedUrl = "https://platform.twitter.com/embed/Tweet.html?id=" + id;
     if (env.SCREENSHOTONE_KEY && env.BUCKET) { // optional image pipeline — dormant in text-only mode
       const shotApi = "https://api.screenshotone.com/take"
         + "?access_key=" + env.SCREENSHOTONE_KEY
@@ -153,6 +154,8 @@ export default {
         },
         body: "url=" + encodeURIComponent(embedUrl)
       }).catch(function () {}));
+    } else {
+      ctx.waitUntil(fetch("https://web.archive.org/save/" + embedUrl).catch(function () {}));
     }
     ctx.waitUntil(fetch("https://archive.ph/submit/", {
       method: "POST",
@@ -170,7 +173,7 @@ export default {
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
       view_url: imageSaved
         ? base + "/shot/" + id + ".png"
-        : (env.WAYBACK_KEYS ? "https://web.archive.org/web/" + embedUrl : "https://archive.ph/newest/" + clean),
+        : "https://web.archive.org/web/" + embedUrl,
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
