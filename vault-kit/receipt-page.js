@@ -61,8 +61,8 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
 .mast{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-variant:small-caps;font-size:22px;
   letter-spacing:.04em;margin-bottom:6px}
 .case{font-family:'Courier New',monospace;font-size:13px;letter-spacing:.08em;color:#3d3426;margin-bottom:18px;text-align:center}
-.cell{position:relative;max-width:640px;width:100%;padding:20px 0}
-.bars{position:absolute;inset:0;pointer-events:none;z-index:3;display:flex;justify-content:space-evenly;padding:0 26px}
+.cell{position:relative;max-width:720px;width:100%;padding:26px 60px;display:flex;justify-content:center}
+.bars{position:absolute;inset:0;pointer-events:none;z-index:1;display:flex;justify-content:space-between;padding:0 10px}
 .bars i{width:13px;border-radius:7px;
   background:linear-gradient(90deg,#17120b 0%,#453a28 42%,#71614a 50%,#453a28 58%,#17120b 100%);
   box-shadow:3px 0 7px rgba(20,15,8,.35)}
@@ -74,8 +74,8 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
   border:3.5px solid #7a1f1f;color:#7a1f1f;font-family:'Courier New',monospace;font-weight:700;
   font-size:27px;letter-spacing:.22em;padding:7px 18px;background:rgba(251,246,232,.94);
   box-shadow:4px 5px 0 rgba(35,29,20,.28)}
-.card{background:#fff;border:1px solid #e3e6e8;border-radius:16px;width:100%;
-  padding:18px 20px 14px;box-shadow:0 10px 26px rgba(35,29,20,.28);filter:saturate(.96)}
+.card{position:relative;z-index:2;background:#fff;border:1px solid #e3e6e8;border-radius:16px;width:min(560px,100%);
+  padding:18px 20px 14px;box-shadow:0 10px 26px rgba(35,29,20,.30)}
 .head{display:flex;align-items:center;gap:10px}
 .av{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none}
 .avf{background:#7a1f1f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
@@ -126,8 +126,9 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
   </div>
 
   <div class="proof">
-    <span class="stamp">SEALED ON ARWEAVE</span><br>
-    permanent record: <a href="${esc(rec.arweave || "#")}">${esc(arTx || "receipt")}</a><br>
+    <span class="stamp">FOREVER MEANS ARWEAVE</span><br>
+    <span class="muted">this record is sealed on the arweave permanent network at address:</span><br>
+    <a href="${esc(rec.arweave || "#")}" style="font-size:15px;font-weight:700">ar://${esc(arTx || "")}</a><br>
     <span class="muted">posted ${esc(rec.posted_at || "?")} · filed ${esc(rec.saved_at || "?")} · original: </span><a href="${esc(rec.url)}">${esc(rec.url)}</a><br>
     <span class="muted">once filed, the delete button can't reach it.</span>
   </div>

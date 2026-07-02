@@ -55,10 +55,21 @@ export default {
         headers: { ...CORS, "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" }
       });
     }
-    // ---- receipt pages live on the site itself; old worker links funnel there ----
+    // ---- the receipt page, served directly (also lives on the site as receipt.html) ----
     if (req.method === "GET" && u.pathname.startsWith("/receipt/")) {
       const rid = (u.pathname.split("/").pop() || "").replace(/\.html$/, "");
-      return Response.redirect((env.SITE_BASE || "https://theretardedbull.xyz") + "/receipt.html?id=" + rid, 302);
+      if (!/^\d{1,25}$/.test(rid)) return json({ ok: false, error: "bad id" }, 400);
+      let rec = null;
+      try {
+        const r = await fetch("https://raw.githubusercontent.com/" + env.REPO + "/main/vault/" + rid + ".json", {
+          headers: { "user-agent": "gazette-vault-worker" }
+        });
+        if (r.ok) rec = await r.json();
+      } catch (e) {}
+      if (!rec) return json({ ok: false, error: "not in vault" }, 404);
+      return new Response(renderReceiptPage(rec), {
+        headers: { ...CORS, "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=120" }
+      });
     }
 
     // ---- single record, fresh from git (feeds the site's receipt page) ----

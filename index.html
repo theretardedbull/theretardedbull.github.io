@@ -73,13 +73,20 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 .small-print{font-size:11px;font-style:italic;margin-top:6px;letter-spacing:.04em;color:var(--sepia)}
 
 .ledger{margin-top:10px;border:1px solid var(--ink);background:var(--paper-card);overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--sepia) var(--paper-card)}
+.ledger{scrollbar-width:none}
+.ledger::-webkit-scrollbar{display:none}
+.ledger-wrap{position:relative}
+.ledger-track{display:none;position:absolute;top:1px;bottom:1px;right:1px;width:12px;
+  background:var(--paper-card);border-left:1px solid var(--rule);cursor:pointer}
+.ledger-track.on{display:block}
+#ledgerThumb{position:absolute;left:2px;right:2px;top:0;background:var(--sepia);border-radius:6px;min-height:30px}
+#ledgerThumb:hover{background:var(--ink)}
 .ledger-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-top:1px solid var(--rule);font-family:'Special Elite',monospace;font-size:12px;color:var(--ink)}
 .ledger-row:first-child{border-top:none}
 .ledger-handle{font-weight:700;flex:none}
 .ledger-id{color:var(--sepia);flex:none}
 .ledger-ticker{flex:1;min-width:0;overflow:hidden;white-space:nowrap;border-left:1px solid var(--rule);border-right:1px solid var(--rule);padding:0 10px}
-.ledger-ticker-inner{display:inline-flex;white-space:nowrap}
-.ledger-ticker-inner.tick{animation:rrTick 26s linear infinite;will-change:transform}
+.ledger-ticker-inner{display:inline-flex;white-space:nowrap;will-change:transform;backface-visibility:hidden}
 .ledger-ticker-inner span{padding-right:56px}
 .ledger-time{color:var(--sepia);flex:none}
 .ledger-saved{flex:none;font-weight:700}
@@ -90,7 +97,6 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 
 .footer{border-top:3px double var(--ink);margin-top:26px;padding:12px var(--gutter) calc(16px + env(safe-area-inset-bottom));font-size:11.5px;color:var(--ink-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 
-@keyframes rrTick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 @keyframes rrKen{from{transform:scale(1.01) translate(0,0)}to{transform:scale(1.08) translate(-1.6%,-2.2%)}}
 
 /* Stamp folds into the flow before it can collide with the masthead */
@@ -124,7 +130,6 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 }
 
 @media (prefers-reduced-motion:reduce){
-  .ledger-ticker-inner.tick{animation:none}
   .plate:hover .plate-frame img{animation:none}
   .plate-frame{transition:none}
 }
@@ -163,7 +168,10 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     </div>
     <div class="saver-status" id="saveStatus" role="status" aria-live="polite"></div>
     <div class="small-print">*** to save a post — paste its URL BEFORE it is deleted; once filed, the delete button can't reach it ***</div>
-    <div class="ledger" id="ledger"></div>
+    <div class="ledger-wrap">
+      <div class="ledger" id="ledger"></div>
+      <div class="ledger-track" id="ledgerTrack"><div id="ledgerThumb"></div></div>
+    </div>
   </section>
 
   <footer class="footer">
@@ -255,7 +263,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       { handle: "ser_gm_only", text: "gm. we pump.", author: "GM Ser (fictional)" }
     ];
     var demoRows = [];
-    for (var di = 0; di < Math.min(DEMO_N, 30); di++) {
+    for (var di = 0; di < Math.min(DEMO_N, 60); di++) {
       var seed = demoSeeds[di % demoSeeds.length];
       demoRows.push({
         handle: seed.handle, id: String(1808642042069421337 - di * 991).slice(0, 19 - (di % 3)),
@@ -375,6 +383,26 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   var renderTimer = null;
   function scheduleRender() { clearTimeout(renderTimer); renderTimer = setTimeout(render, 150); }
 
+  // The wire clock — 26px/second, shared by every ticker, integer pixels only
+  var tickers = [];
+  var WIRE_SPEED = 26;
+  if (!window.matchMedia || !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var wireStart = null, wireLast = 0;
+    (function wire(ts) {
+      if (wireStart === null) wireStart = ts;
+      var t = (ts - wireStart) / 1000;
+      if (t - wireLast >= 1 / 30) { // 30fps is plenty for 26px/s and halves the work
+        wireLast = t;
+        var px = t * WIRE_SPEED;
+        for (var i = 0; i < tickers.length; i++) {
+          var off = px % tickers[i].w;
+          tickers[i].el.style.transform = "translate3d(-" + (off | 0) + "px,0,0)";
+        }
+      }
+      requestAnimationFrame(wire);
+    })(0);
+  }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -426,32 +454,59 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       ledgerEl.appendChild(row);
     });
 
-    // Every ticker scrolls, wire-style, at a constant per-pixel pace.
-    // Short texts get cloned until the loop is seamless (even copy count, ≥2× window).
+    // One clock, every wire in lockstep: a single rAF loop drives all tickers at the
+    // same speed, snapped to whole pixels (fractional positions are what shimmer).
+    tickers = [];
     Array.prototype.forEach.call(ledgerEl.querySelectorAll(".ledger-ticker"), function (tk) {
       var inner = tk.firstChild;
       if (!inner || !inner.firstChild) return;
-      var guard = 0;
-      while (inner.scrollWidth < tk.clientWidth * 2 && guard++ < 24) {
+      var copyW = inner.firstChild.offsetWidth; // includes the 56px gap padding
+      if (!copyW) return;
+      var need = Math.ceil(tk.clientWidth / copyW) + 1;
+      while (inner.children.length < need && inner.children.length < 30) {
         inner.appendChild(inner.firstChild.cloneNode(true));
       }
-      if (inner.children.length % 2) inner.appendChild(inner.firstChild.cloneNode(true));
-      inner.style.animationDuration = Math.max(14, Math.round(inner.scrollWidth / 2 / 55)) + "s";
-      inner.classList.add("tick");
+      tickers.push({ el: inner, w: copyW });
     });
 
-    // 10 rows visible; everything past that scrolls inside the ledger
+    // 10 rows visible; everything past that scrolls inside the ledger,
+    // with an always-visible brand scrollbar (macOS hides the native one)
+    var track = document.getElementById("ledgerTrack");
     if (list.length > VISIBLE_ROWS) {
       var firstRow = ledgerEl.querySelector(".ledger-row");
       if (firstRow) {
         ledgerEl.style.maxHeight = (firstRow.offsetHeight * VISIBLE_ROWS) + "px";
         ledgerEl.style.overflowY = "auto";
+        ledgerEl.style.paddingRight = "13px";
+        track.classList.add("on");
+        updateThumb();
       }
     } else {
       ledgerEl.style.maxHeight = "";
       ledgerEl.style.overflowY = "";
+      ledgerEl.style.paddingRight = "";
+      track.classList.remove("on");
     }
   }
+
+  function updateThumb() {
+    var track = document.getElementById("ledgerTrack");
+    var thumb = document.getElementById("ledgerThumb");
+    if (!track.classList.contains("on")) return;
+    var trackH = track.clientHeight;
+    var h = Math.max(30, Math.round(trackH * ledgerEl.clientHeight / ledgerEl.scrollHeight));
+    var maxScroll = ledgerEl.scrollHeight - ledgerEl.clientHeight;
+    var top = maxScroll > 0 ? Math.round((trackH - h) * ledgerEl.scrollTop / maxScroll) : 0;
+    thumb.style.height = h + "px";
+    thumb.style.top = top + "px";
+  }
+  ledgerEl.addEventListener("scroll", updateThumb, { passive: true });
+  document.getElementById("ledgerTrack").addEventListener("click", function (e) {
+    if (e.target.id === "ledgerThumb") return;
+    var rect = this.getBoundingClientRect();
+    var frac = (e.clientY - rect.top) / rect.height;
+    ledgerEl.scrollTop = frac * (ledgerEl.scrollHeight - ledgerEl.clientHeight);
+  });
 
   button.addEventListener("click", saveIt);
   input.addEventListener("keydown", function (e) { if (e.key === "Enter") saveIt(); });
