@@ -18,6 +18,9 @@
 //   GET  /vault/<id>.json  → the record
 //   GET  /shot/<id>.png    → the screenshot (immutable, cache-forever)
 
+import { uploadToArweave } from "./arweave-lite.js";
+import { renderSnapshotSVG } from "./snapshot-svg.js";
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -51,6 +54,33 @@ export default {
         headers: { ...CORS, "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" }
       });
     }
+    // ---- the exhibit: renders the saved post as an image, from the permanent record ----
+    if (req.method === "GET" && u.pathname.startsWith("/snapshot/")) {
+      const sid = (u.pathname.split("/").pop() || "").replace(/\.svg$/, "");
+      if (!/^\d{1,25}$/.test(sid)) return json({ ok: false, error: "bad id" }, 400);
+      const cacheKey = new Request(u.origin + "/snapshot/" + sid + ".svg?v=2");
+      const hit = await caches.default.match(cacheKey);
+      if (hit) return hit;
+      let rec = null;
+      try {
+        const r = await fetch("https://raw.githubusercontent.com/" + env.REPO + "/main/vault/" + sid + ".json", {
+          headers: { "user-agent": "gazette-vault-worker" }
+        });
+        if (r.ok) rec = await r.json();
+      } catch (e) {}
+      if (!rec) return json({ ok: false, error: "not in vault" }, 404);
+      const svg = await renderSnapshotSVG({
+        text: rec.text, authorName: rec.author_name, handle: rec.handle,
+        avatarUrl: rec.avatar_url || null, photo: rec.photo || null,
+        postedAt: rec.posted_at, url: rec.url, id: rec.id
+      });
+      const resp = new Response(svg, {
+        headers: { ...CORS, "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=86400" }
+      });
+      ctx.waitUntil(caches.default.put(cacheKey, resp.clone()));
+      return resp;
+    }
+
     if (req.method !== "POST") return json({ ok: false, error: "POST {\"url\":\"https://x.com/handle/status/123\"}" }, 405);
 
     // ---- 0. validate (reject anything that isn't a tweet URL) ----
@@ -108,7 +138,7 @@ export default {
     }
 
     // ---- 3. post data: FxTwitter primary (keyless, no captcha, full JSON), oEmbed fallback ----
-    let text = null, author = null, postedAt = null, tweetHtml = null;
+    let text = null, author = null, postedAt = null, tweetHtml = null, avatarUrl = null, photo = null;
     try {
       const r = await fetch("https://api.fxtwitter.com/" + handle + "/status/" + id, {
         headers: { "user-agent": "gazette-vault-worker" }
@@ -121,6 +151,9 @@ export default {
           const nm = t.author && t.author.name;
           author = (nm && nm.replace(/[\s.]/g, "").length ? nm : null) || (t.author && t.author.screen_name ? "@" + t.author.screen_name : null);
           if (t.created_timestamp) postedAt = new Date(t.created_timestamp * 1000).toISOString();
+          avatarUrl = (t.author && t.author.avatar_url) || null;
+          const ph = t.media && t.media.photos && t.media.photos[0];
+          photo = ph ? { url: ph.url, width: ph.width || 0, height: ph.height || 0 } : null;
         }
       } else warnings.push("fxtwitter http " + r.status);
     } catch (e) { warnings.push("fxtwitter unreachable"); }
@@ -171,9 +204,10 @@ export default {
       posted_at: postedAt,
       saved_at: new Date().toISOString(),
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
-      view_url: imageSaved
-        ? base + "/shot/" + id + ".png"
-        : "https://archive.today/newest/" + clean,
+      view_url: base + "/snapshot/" + id + ".svg",
+      snapshot: base + "/snapshot/" + id + ".svg",
+      avatar_url: avatarUrl,
+      photo: photo,
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
@@ -183,6 +217,21 @@ export default {
       archive_today: "https://archive.ph/newest/" + clean,
       pipeline_version: 4
     };
+    // ---- 5.5 the permanent text receipt on Arweave (paid in SOL, ~1/25 of a cent) ----
+    rec.arweave = null;
+    if (env.ARWEAVE_KEY) {
+      try {
+        const key = Uint8Array.from(JSON.parse(env.ARWEAVE_KEY));
+        const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(rec, null, 1)), [
+          { name: "Content-Type", value: "application/json" },
+          { name: "App-Name", value: "retarded-bull-gazette" },
+          { name: "Type", value: "post-receipt" },
+          { name: "Post-Id", value: id }
+        ], key);
+        rec.arweave = ar.url;
+      } catch (e) { warnings.push("arweave: " + (e && e.message)); }
+    } else warnings.push("arweave key not configured");
+
     if (env.BUCKET) {
       await env.BUCKET.put("vault/" + id + ".json", JSON.stringify(rec, null, 2), {
         httpMetadata: { contentType: "application/json" }
@@ -209,7 +258,7 @@ export default {
         const entry = {
           id: id, handle: handle, url: clean,
           author_name: rec.author_name, text: text, image: rec.image,
-          view_url: rec.view_url,
+          view_url: rec.view_url, arweave: rec.arweave,
           posted_at: rec.posted_at, saved_at: rec.saved_at,
           tweet_missing_at_save: rec.tweet_missing_at_save
         };
