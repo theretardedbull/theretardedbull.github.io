@@ -21,5 +21,7 @@
  "arweave": "https://arweave.net/eOjik3zHZVwikGV5EJnlIiJCIbrW8x_vNVdJo39c3QY",
  "arweave_tx": "eOjik3zHZVwikGV5EJnlIiJCIbrW8x_vNVdJo39c3QY",
  "arweave_gateway": "https://gazette-vault.theretardedbull.workers.dev/ar/eOjik3zHZVwikGV5EJnlIiJCIbrW8x_vNVdJo39c3QY",
- "arweave_deadline_height": 1951084
+ "arweave_deadline_height": 1951084,
+ "arweave_block": 1950891,
+ "arweave_bundle": "ssNPkRs6c_Zdojl2TWILXaKZ9b2xDeBRpMwep3O6MTU"
 }
