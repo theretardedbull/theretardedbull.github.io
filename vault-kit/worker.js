@@ -233,11 +233,6 @@ export default {
     } else {
       ctx.waitUntil(fetch("https://web.archive.org/save/" + embedUrl).catch(function () {}));
     }
-    ctx.waitUntil(fetch("https://archive.ph/submit/", {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: "url=" + encodeURIComponent(clean)
-    }).catch(function () {}));
 
     // ---- 5. the permanent record ----
     const rec = {
@@ -257,8 +252,7 @@ export default {
       text: text,
       tweet_html: tweetHtml,
       tweet_missing_at_save: !text,
-      archive_today: "https://archive.ph/newest/" + clean,
-      pipeline_version: 4
+      pipeline_version: 5
     };
     // ---- 5.5 the permanent text receipt on Arweave (paid in SOL, ~1/25 of a cent) ----
     rec.arweave = null;

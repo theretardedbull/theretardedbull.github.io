@@ -316,10 +316,6 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       input.value = "";
       return;
     }
-    // archive.today's own bookmarklet param (run=1) auto-submits the save on load —
-    // opened synchronously in the click so popup blockers allow it, from a real
-    // human browser so archive.today accepts it. Zero extra steps.
-    try { window.open("https://archive.ph/?run=1&url=" + encodeURIComponent(clean), "_blank", "noopener"); } catch (e) {}
     rows.unshift({
       handle: handle, id: id, url: clean,
       posted: postedAtFromId(id),
@@ -341,18 +337,18 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           persist();
           render();
           if (j.duplicate) { setStatus(dupeLine(), false); return; }
-          setStatus("✓ FILED FOREVER — RECEIPT №" + id + " · ARCHIVE.TODAY IS SHOOTING THE SNAPSHOT IN THE OTHER TAB (LET IT FINISH)", true);
+          setStatus("✓ FILED FOREVER — RECEIPT №" + id + " SEALED ON ARWEAVE", true);
         })
         .catch(function () {
           rows = rows.filter(function (r) { return r.id !== id; });
           persist();
           render();
           input.value = clean;
-          setStatus("✗ THE VAULT ENGINE HICCUPED — NOTHING LOST (THE SNAPSHOT TAB IS ALREADY RUNNING); PRESS FILE IT AGAIN IN A MOMENT", false);
+          setStatus("✗ THE VAULT ENGINE HICCUPED — NOTHING LOST; PRESS FILE IT AGAIN IN A MOMENT", false);
         });
     } else {
       fetchText(clean, id);
-      setStatus("✓ SAVED LOCALLY — ARCHIVE.TODAY SNAPSHOT RUNNING IN THE NEW TAB (LET IT FINISH)", true);
+      setStatus("✓ SAVED LOCALLY — THE VAULT ENGINE PICKS IT UP SHORTLY", true);
     }
   }
 
