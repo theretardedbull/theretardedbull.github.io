@@ -279,6 +279,15 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     statusEl.className = "saver-status" + (ok === false ? " err" : "");
   }
 
+  var DUPE_LINES = [
+    "ALREADY ON FILE — THE EDITOR REMEMBERS. HE ALWAYS REMEMBERS.",
+    "ALREADY IN THE VAULT — ONE RECEIPT PER RUG, LAW OF THE LEDGER",
+    "FILED TWICE? THE EDITOR ADMIRES THE HUSTLE. STILL NO.",
+    "WE GOT IT THE FIRST TIME — THE DELETE BUTTON STILL CAN'T REACH IT",
+    "DUPLICATE — THIS ONE'S ALREADY NAILED TO THE FRONT PAGE"
+  ];
+  function dupeLine() { return "✗ " + DUPE_LINES[Math.floor(Math.random() * DUPE_LINES.length)]; }
+
   function saveIt() {
     var v = (input.value || "").trim();
     var m = v.match(/^https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/([A-Za-z0-9_]{1,15})\/status\/(\d+)/i);
@@ -288,6 +297,11 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     }
     var handle = m[1], id = m[2];
     var clean = "https://x.com/" + handle + "/status/" + id;
+    if (mergedRows().some(function (r) { return r.id === id; })) {
+      setStatus(dupeLine(), false);
+      input.value = "";
+      return;
+    }
     rows.unshift({
       handle: handle, id: id, url: clean,
       posted: postedAtFromId(id),
@@ -308,9 +322,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           });
           persist();
           render();
-          setStatus(j.duplicate
-            ? "✓ ALREADY IN THE VAULT — ONE RECORD PER POST, FIRST SAVE WINS"
-            : "✓ FILED FOREVER — RECEIPT №" + id + " COMMITTED TO THE VAULT", true);
+          if (j.duplicate) { setStatus(dupeLine(), false); return; }
+          setStatus("✓ FILED FOREVER — RECEIPT №" + id + " COMMITTED TO THE VAULT", true);
         })
         .catch(function () {
           fetchText(clean, id);
