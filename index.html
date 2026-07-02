@@ -256,10 +256,10 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
       if (!Array.isArray(list)) return;
       globalRows = list.map(function (rec) {
         return {
-          handle: rec.handle, id: rec.id, url: rec.url,
+          handle: rec.handle, id: rec.post_id || rec.id, url: rec.url,
           posted: rec.posted_at || postedAtFromId(rec.id),
           text: rec.text || null, author: rec.author_name || null,
-          image: rec.image || null, view: rec.view_url || null,
+          image: rec.image || null, view: rec.snapshot || rec.view_url || null,
           arweave: rec.arweave || null,
           permanent: true
         };

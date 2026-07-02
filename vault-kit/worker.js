@@ -81,7 +81,7 @@ export default {
           headers: { "user-agent": "gazette-vault-worker" }
         });
         if (r.ok) return new Response(await r.text(), {
-          headers: { ...CORS, "content-type": "application/json", "cache-control": "no-store" }
+          headers: { ...CORS, "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }
         });
       } catch (e) {}
       return json({ ok: false, error: "not in vault" }, 404);
@@ -94,7 +94,7 @@ export default {
           headers: { "user-agent": "gazette-vault-worker" }
         });
         if (r.ok) return new Response(await r.text(), {
-          headers: { ...CORS, "content-type": "application/json", "cache-control": "no-store" }
+          headers: { ...CORS, "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }
         });
       } catch (e) {}
       return json([], 200);
@@ -121,7 +121,7 @@ export default {
       const resp = new Response(body, {
         headers: {
           ...CORS,
-          "content-type": upstream.headers.get("content-type") || "application/json",
+          "content-type": ((upstream.headers.get("content-type") || "application/json").includes("json") ? "application/json; charset=utf-8" : upstream.headers.get("content-type")),
           "cache-control": "public, max-age=31536000, immutable",
           "x-arweave-tx": txid
         }
@@ -147,8 +147,8 @@ export default {
       if (!rec) return json({ ok: false, error: "not in vault" }, 404);
       const svg = await renderSnapshotSVG({
         text: rec.text, authorName: rec.author_name, handle: rec.handle,
-        avatarUrl: rec.avatar_url || null, photo: rec.photo || null,
-        postedAt: rec.posted_at, url: rec.url, id: rec.id
+        avatarUrl: rec.author_avatar || rec.avatar_url || null, photo: rec.photo || null,
+        postedAt: rec.posted_at, url: rec.url, id: rec.post_id || rec.id
       });
       const resp = new Response(svg, {
         headers: { ...CORS, "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=86400" }
@@ -271,26 +271,22 @@ export default {
       ctx.waitUntil(fetch("https://web.archive.org/save/" + embedUrl).catch(function () {}));
     }
 
-    // ---- 5. the permanent record ----
+    // ---- 5. the permanent record (clean schema — audited) ----
     const rec = {
-      id: id,
+      post_id: id,
       handle: handle,
+      author_name: author,
+      author_avatar: avatarUrl,
       url: clean,
-      posted_at: postedAt,
-      saved_at: new Date().toISOString(),
-      image: imageSaved ? base + "/shot/" + id + ".png" : null,
-      view_url: base + "/snapshot/" + id + ".svg",
-      snapshot: base + "/snapshot/" + id + ".svg",
-      avatar_url: avatarUrl,
+      text: text,
       photo: photo,
       stats: stats,
-      record: base + "/vault/" + id + ".json",
-      forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
-      author_name: author,
-      text: text,
-      tweet_html: tweetHtml,
-      tweet_missing_at_save: !text,
-      pipeline_version: 5
+      posted_at: postedAt,
+      saved_at: new Date().toISOString(),
+      post_missing_at_save: !text,
+      receipt_page: (env.SITE_BASE || "https://theretardedbull.xyz") + "/receipt.html?id=" + id,
+      snapshot: base + "/snapshot/" + id + ".svg",
+      pipeline_version: 6
     };
     // ---- 5.5 the permanent text receipt on Arweave (paid in SOL, ~1/25 of a cent) ----
     rec.arweave = null;
@@ -304,7 +300,8 @@ export default {
           { name: "Post-Id", value: id }
         ], key);
         rec.arweave_tx = ar.id;
-        rec.arweave = base + "/ar/" + ar.id;
+        rec.arweave = "https://arweave.net/" + ar.id;
+        rec.arweave_gateway = base + "/ar/" + ar.id;
         rec.arweave_deadline_height = ar.deadlineHeight;
       } catch (e) { warnings.push("arweave: " + (e && e.message)); }
     } else warnings.push("arweave key not configured");
@@ -333,11 +330,12 @@ export default {
         const r1 = await put("vault/" + id + ".json", JSON.stringify(rec, null, 1));
         if (!r1.ok) warnings.push("git record write http " + r1.status);
         const entry = {
-          id: id, handle: handle, url: clean,
-          author_name: rec.author_name, text: text, image: rec.image,
-          view_url: rec.view_url, arweave: rec.arweave,
+          post_id: id, id: id, handle: handle, url: clean,
+          author_name: rec.author_name, text: text,
+          snapshot: rec.snapshot, receipt_page: rec.receipt_page,
+          arweave: rec.arweave, arweave_tx: rec.arweave_tx, arweave_gateway: rec.arweave_gateway,
           posted_at: rec.posted_at, saved_at: rec.saved_at,
-          tweet_missing_at_save: rec.tweet_missing_at_save
+          post_missing_at_save: rec.post_missing_at_save
         };
         for (let attempt = 0; attempt < 2; attempt++) {
           const cur = await gh("vault/index.json?ref=main");

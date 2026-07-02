@@ -144,16 +144,19 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
   fetch(VAULT_API + "/record/" + id + "?fresh=" + Date.now(), { cache: "no-store" })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (rec) {
-      if (!rec || !rec.id) { fail(); return; }
+      if (!rec) { fail(); return; }
+      var pid = rec.post_id || rec.id;
+      if (!pid) { fail(); return; }
       document.title = "@" + rec.handle + " — receipt · The Retarded Bull Gazette";
       document.getElementById("caseLine").textContent =
-        "CASE №" + rec.id + " · THE PEOPLE OF SOL YORK vs @" + rec.handle;
+        "CASE №" + pid + " · THE PEOPLE OF SOL YORK vs @" + rec.handle;
 
       var card = document.getElementById("card");
       var head = el("div", "head");
-      if (rec.avatar_url) {
+      var avatarSrc = rec.author_avatar || rec.avatar_url;
+      if (avatarSrc) {
         var av = el("img", "av");
-        av.src = rec.avatar_url.replace("_normal", "_200x200");
+        av.src = avatarSrc.replace("_normal", "_200x200");
         av.alt = "";
         av.onerror = function () { var f = el("div", "avf", (rec.handle || "?")[0].toUpperCase()); av.replaceWith(f); };
         head.appendChild(av);
@@ -202,8 +205,8 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
 
       var tx = rec.arweave_tx || (rec.arweave || "").split("/").pop() || "";
       var addr = document.getElementById("arAddr");
-      addr.textContent = "ar://" + tx;
-      addr.href = rec.arweave || (VAULT_API + "/ar/" + tx);
+      addr.textContent = "https://arweave.net/" + tx;
+      addr.href = "https://arweave.net/" + tx;
 
       // Settlement status: stamped in the record, else asked of Arweave live
       var st = document.getElementById("arStatus");
