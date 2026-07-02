@@ -212,6 +212,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           posted: rec.posted_at || postedAtFromId(rec.id),
           text: rec.text || null, author: rec.author_name || null,
           image: rec.image || null, view: rec.view_url || null,
+          arweave: rec.arweave || null,
           permanent: true
         };
       });
@@ -335,7 +336,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
         .then(function (j) {
           if (!j || !j.ok) throw new Error("vault refused");
           rows = rows.map(function (r) {
-            return r.id === id ? Object.assign({}, r, { text: j.text || r.text, author: j.author_name || r.author, image: j.image || null, view: j.view_url || r.view, posted: j.posted_at || r.posted, permanent: true }) : r;
+            return r.id === id ? Object.assign({}, r, { text: j.text || r.text, author: j.author_name || r.author, image: j.image || null, view: j.view_url || r.view, arweave: j.arweave || null, posted: j.posted_at || r.posted, permanent: true }) : r;
           });
           persist();
           render();
@@ -413,8 +414,8 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       row.appendChild(el("span", "ledger-saved", "saved ✓"));
 
       var links = el("span", "ledger-links");
-      var linkDefs = [["view ↗", r.view || r.image || ("https://archive.ph/newest/" + r.url), "ox"]];
-      if (r.permanent) linkDefs.push(["receipt ↗", "/vault/" + r.id + ".json", "ox"]);
+      var linkDefs = [];
+      if (r.permanent) linkDefs.push(["receipt ↗", r.arweave || ("/vault/" + r.id + ".json"), "ox"]);
       linkDefs.concat([
        ["post ↗", r.url, "ink"]
       ]).forEach(function (l) {
