@@ -28,6 +28,18 @@ const CORS = {
   "Access-Control-Allow-Headers": "content-type"
 };
 
+// What goes on Arweave: the post's testimony only — no Gazette plumbing.
+function sealedCopy(rec) {
+  return {
+    post_id: rec.post_id, handle: rec.handle, author_name: rec.author_name,
+    author_avatar: rec.author_avatar, url: rec.url, text: rec.text,
+    photo: rec.photo, stats: rec.stats,
+    posted_at: rec.posted_at, saved_at: rec.saved_at,
+    post_missing_at_save: rec.post_missing_at_save,
+    pipeline_version: rec.pipeline_version
+  };
+}
+
 function json(obj, status) {
   return new Response(JSON.stringify(obj, null, 2), {
     status: status || 200,
@@ -293,7 +305,7 @@ export default {
     if (env.ARWEAVE_KEY) {
       try {
         const key = Uint8Array.from(JSON.parse(env.ARWEAVE_KEY));
-        const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(rec)), [
+        const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(sealedCopy(rec))), [
           { name: "Content-Type", value: "application/json" },
           { name: "App-Name", value: "retarded-bull-gazette" },
           { name: "Type", value: "post-receipt" },
@@ -416,10 +428,7 @@ export default {
         } else if (!t && height && rec.arweave_deadline_height && height > rec.arweave_deadline_height + 30 && env.ARWEAVE_KEY) {
           try {
             const key = Uint8Array.from(JSON.parse(env.ARWEAVE_KEY));
-            const clean = Object.assign({}, rec);
-            delete clean.arweave; delete clean.arweave_tx; delete clean.arweave_deadline_height;
-            delete clean.arweave_block; delete clean.arweave_bundle;
-            const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(clean)), [
+            const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(sealedCopy(rec))), [
               { name: "Content-Type", value: "application/json" },
               { name: "App-Name", value: "retarded-bull-gazette" },
               { name: "Type", value: "post-receipt" },
