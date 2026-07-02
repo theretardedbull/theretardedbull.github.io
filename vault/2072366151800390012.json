@@ -13,8 +13,8 @@
  "receipt_page": "https://theretardedbull.xyz/receipt.html?id=2072366151800390012",
  "snapshot": "https://gazette-vault.theretardedbull.workers.dev/snapshot/2072366151800390012.svg",
  "pipeline_version": 6,
- "arweave_tx": "k26Rs01HRmJM2ajXFNERw6TFZBi2Qkd-FhMHddBQTwQ",
- "arweave": "https://arweave.net/k26Rs01HRmJM2ajXFNERw6TFZBi2Qkd-FhMHddBQTwQ",
- "arweave_gateway": "https://gazette-vault.theretardedbull.workers.dev/ar/k26Rs01HRmJM2ajXFNERw6TFZBi2Qkd-FhMHddBQTwQ",
+ "arweave_tx": "U2xoiiGc5uOR-ZJDP5gJ9zf1gtst7rHEcwSkoqwurNw",
+ "arweave": "https://arweave.net/U2xoiiGc5uOR-ZJDP5gJ9zf1gtst7rHEcwSkoqwurNw",
+ "arweave_gateway": "https://gazette-vault.theretardedbull.workers.dev/ar/U2xoiiGc5uOR-ZJDP5gJ9zf1gtst7rHEcwSkoqwurNw",
  "arweave_deadline_height": 1951083
 }

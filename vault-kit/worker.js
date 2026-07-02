@@ -28,16 +28,17 @@ const CORS = {
   "Access-Control-Allow-Headers": "content-type"
 };
 
-// What goes on Arweave: the post's testimony only — no Gazette plumbing.
+// What goes on Arweave: the post's testimony only — no nulls, no plumbing.
 function sealedCopy(rec) {
-  return {
+  const s = {
     post_id: rec.post_id, handle: rec.handle, author_name: rec.author_name,
-    author_avatar: rec.author_avatar, url: rec.url, text: rec.text,
-    photo: rec.photo, stats: rec.stats,
-    posted_at: rec.posted_at, saved_at: rec.saved_at,
-    post_missing_at_save: rec.post_missing_at_save,
-    pipeline_version: rec.pipeline_version
+    url: rec.url, text: rec.text,
+    posted_at: rec.posted_at, saved_at: rec.saved_at
   };
+  if (rec.author_avatar) s.author_avatar = rec.author_avatar;
+  if (rec.photo) s.photo = rec.photo;
+  if (rec.stats && Object.values(rec.stats).some((v) => v != null)) s.stats = rec.stats;
+  return s;
 }
 
 function json(obj, status) {
