@@ -95,15 +95,20 @@ export async function createSignedDataItem(dataBytes, tags, secretKey64) {
   return { raw, id: b64url(await sha("SHA-256", signature)) };
 }
 
-// Upload a signed DataItem to Irys (pays from the signer's funded Irys balance)
-export async function uploadToArweave(dataBytes, tags, secretKey64, uploaderBase) {
+// Upload a signed DataItem to Turbo (ar.io's bundler → settles on Arweave L1;
+// receipts under 100KiB ride free, response carries the settlement deadlineHeight)
+export async function uploadToArweave(dataBytes, tags, secretKey64, endpoint) {
   const { raw, id } = await createSignedDataItem(dataBytes, tags, secretKey64);
-  const res = await fetch((uploaderBase || "https://uploader.irys.xyz") + "/tx/solana", {
+  const res = await fetch(endpoint || "https://upload.ardrive.io/v1/tx", {
     method: "POST",
-    headers: { "content-type": "application/octet-stream" },
+    headers: { "content-type": "application/octet-stream", accept: "application/json" },
     body: raw,
   });
-  if (!res.ok) throw new Error("irys upload http " + res.status + ": " + (await res.text()).slice(0, 140));
+  if (!res.ok) throw new Error("arweave upload http " + res.status + ": " + (await res.text()).slice(0, 140));
   const body = await res.json().catch(() => ({}));
-  return { id: body.id || id, url: "https://gateway.irys.xyz/" + (body.id || id) };
+  return {
+    id: body.id || id,
+    deadlineHeight: body.deadlineHeight || null,
+    url: "https://arweave.net/" + (body.id || id),
+  };
 }

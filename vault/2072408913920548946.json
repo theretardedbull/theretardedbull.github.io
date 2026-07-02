@@ -16,6 +16,7 @@
  "tweet_html": null,
  "tweet_missing_at_save": false,
  "pipeline_version": 4,
- "arweave_tx": "ogarhufWFyfgAwoFsBVzytvnaFDpAELCFrkL56g9o97",
- "arweave": "https://gazette-vault.theretardedbull.workers.dev/ar/ogarhufWFyfgAwoFsBVzytvnaFDpAELCFrkL56g9o97"
+ "arweave_tx": "C_V5hbIjd6JYFoT5aieIv4pYkd8qZzBhmpJqDSh0_p4",
+ "arweave": "https://gazette-vault.theretardedbull.workers.dev/ar/C_V5hbIjd6JYFoT5aieIv4pYkd8qZzBhmpJqDSh0_p4",
+ "arweave_deadline_height": 1951063
 }

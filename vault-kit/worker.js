@@ -109,7 +109,7 @@ export default {
       const hit = await caches.default.match(cacheKey);
       if (hit) return hit;
       let upstream = null;
-      for (const gw of ["https://gateway.irys.xyz/", "https://arweave.net/raw/", "https://arweave.net/"]) {
+      for (const gw of ["https://arweave.net/raw/", "https://turbo-gateway.com/raw/", "https://turbo-gateway.com/", "https://gateway.irys.xyz/"]) {
         try {
           const r = await fetch(gw + txid, { redirect: "follow" });
           const ct = r.headers.get("content-type") || "";
@@ -305,6 +305,7 @@ export default {
         ], key);
         rec.arweave_tx = ar.id;
         rec.arweave = base + "/ar/" + ar.id;
+        rec.arweave_deadline_height = ar.deadlineHeight;
       } catch (e) { warnings.push("arweave: " + (e && e.message)); }
     } else warnings.push("arweave key not configured");
 
