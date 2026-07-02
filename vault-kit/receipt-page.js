@@ -65,12 +65,8 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
 .case{font-family:'Courier New',monospace;font-size:13px;letter-spacing:.08em;color:#3d3426;margin-bottom:18px;text-align:center}
 .cell{position:relative;max-width:720px;width:100%;padding:26px 60px;display:flex;justify-content:center}
 .bars{position:absolute;inset:0;pointer-events:none;z-index:1;display:flex;justify-content:space-between;padding:0 10px}
-.bars i{width:13px;border-radius:7px;
-  background:linear-gradient(90deg,#17120b 0%,#453a28 42%,#71614a 50%,#453a28 58%,#17120b 100%);
-  box-shadow:3px 0 7px rgba(20,15,8,.35)}
-.rail{position:absolute;left:0;right:0;height:15px;border-radius:8px;z-index:4;pointer-events:none;
-  background:linear-gradient(180deg,#17120b 0%,#453a28 40%,#71614a 50%,#453a28 60%,#17120b 100%);
-  box-shadow:0 4px 8px rgba(20,15,8,.3)}
+.bars i{width:14px;background:#231d14;box-shadow:4px 4px 0 rgba(35,29,20,.18)}
+.rail{position:absolute;left:0;right:0;height:16px;z-index:4;pointer-events:none;background:#231d14;box-shadow:4px 4px 0 rgba(35,29,20,.18)}
 .rail.top{top:0}.rail.bot{bottom:0}
 .gotcha{position:absolute;top:-6px;right:-12px;transform:rotate(-9deg);z-index:5;
   border:3.5px solid #7a1f1f;color:#7a1f1f;font-family:'Courier New',monospace;font-weight:700;

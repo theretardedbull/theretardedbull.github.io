@@ -13,7 +13,8 @@
   "arweave_gateway": "https://gazette-vault.theretardedbull.workers.dev/ar/aILfEmAcMidZbxpFwceIxCjejEeLRxNdJ9L8AsJaTkg",
   "posted_at": "2026-07-01T19:56:03.000Z",
   "saved_at": "2026-07-02T14:55:49.389Z",
-  "post_missing_at_save": false
+  "post_missing_at_save": false,
+  "arweave_block": 1950875
  },
  {
   "post_id": "2072366151800390012",
@@ -29,6 +30,7 @@
   "arweave_gateway": "https://gazette-vault.theretardedbull.workers.dev/ar/j0EXa7-CXcYt1x7MDkNA_Ebwll0vxBNwEbUN01hGVA8",
   "posted_at": "2026-07-01T17:06:07.000Z",
   "saved_at": "2026-07-02T09:12:03.581Z",
-  "post_missing_at_save": false
+  "post_missing_at_save": false,
+  "arweave_block": 1950875
  }
 ]
