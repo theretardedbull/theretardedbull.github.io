@@ -173,7 +173,7 @@ export default {
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
       view_url: imageSaved
         ? base + "/shot/" + id + ".png"
-        : "https://web.archive.org/web/" + embedUrl,
+        : "https://web.archive.org/web/https://raw.githubusercontent.com/" + (env.REPO || "") + "/main/vault/" + id + ".json",
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
@@ -226,6 +226,9 @@ export default {
           if (r2.ok) break;
           if (r2.status !== 409) { warnings.push("git index write http " + r2.status); break; }
         }
+        // The raw record is live on github the instant it commits — archive it at the
+        // Internet Archive so an independent, timestamped copy of the receipt exists.
+        ctx.waitUntil(fetch("https://web.archive.org/save/https://raw.githubusercontent.com/" + env.REPO + "/main/vault/" + id + ".json").catch(function () {}));
       } catch (e) {
         warnings.push("git receipt error: " + (e && e.message));
       }
