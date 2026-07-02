@@ -366,5 +366,94 @@ export default {
     }
 
     return json({ ok: true, warnings: warnings, ...rec });
+  },
+
+  // Every 30 min: ask Arweave's own index about unconfirmed receipts. Confirmed →
+  // stamp block+bundle into the record forever. Deadline blown → re-upload (self-heal).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      if (!(env.GH_TOKEN && env.REPO)) return;
+      const ua = { "user-agent": "gazette-vault-worker" };
+      const api = (path, init) => fetch("https://api.github.com/repos/" + env.REPO + "/contents/" + path, Object.assign({}, init, {
+        headers: Object.assign({ authorization: "Bearer " + env.GH_TOKEN, accept: "application/vnd.github+json" }, ua, (init && init.headers) || {})
+      }));
+      const b64e = (s) => btoa(unescape(encodeURIComponent(s)));
+      const b64d = (s) => decodeURIComponent(escape(atob(String(s).replace(/\n/g, ""))));
+
+      const ir = await fetch("https://raw.githubusercontent.com/" + env.REPO + "/main/vault/index.json", { headers: ua });
+      if (!ir.ok) return;
+      const index = await ir.json();
+      const needs = index.filter((e) => e.arweave_tx && !e.arweave_block).slice(0, 8);
+      if (!needs.length) return;
+
+      let height = 0;
+      try { height = ((await (await fetch("https://arweave.net/info")).json()) || {}).height || 0; } catch (e) {}
+
+      const patches = {};
+      for (const e of needs) {
+        let t = null;
+        try {
+          const g = await fetch("https://arweave.net/graphql", {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ query: '{ transaction(id: "' + e.arweave_tx + '") { id bundledIn { id } block { height } } }' })
+          });
+          t = (((await g.json()) || {}).data || {}).transaction;
+        } catch (err) {}
+
+        const fr = await api("vault/" + e.id + ".json");
+        if (!fr.ok) continue;
+        const fj = await fr.json();
+        let rec;
+        try { rec = JSON.parse(b64d(fj.content)); } catch (err) { continue; }
+
+        if (t && t.block && t.block.height) {
+          rec.arweave_block = t.block.height;
+          rec.arweave_bundle = (t.bundledIn && t.bundledIn.id) || null;
+          patches[e.id] = { arweave_block: rec.arweave_block };
+          await api("vault/" + e.id + ".json", { method: "PUT", body: JSON.stringify({
+            message: "arweave confirmed: " + e.id + " @ block " + rec.arweave_block,
+            content: b64e(JSON.stringify(rec, null, 1)), sha: fj.sha,
+            committer: { name: "vault-bot", email: "vault-bot@users.noreply.github.com" }
+          }) });
+        } else if (!t && height && rec.arweave_deadline_height && height > rec.arweave_deadline_height + 30 && env.ARWEAVE_KEY) {
+          try {
+            const key = Uint8Array.from(JSON.parse(env.ARWEAVE_KEY));
+            const clean = Object.assign({}, rec);
+            delete clean.arweave; delete clean.arweave_tx; delete clean.arweave_deadline_height;
+            delete clean.arweave_block; delete clean.arweave_bundle;
+            const ar = await uploadToArweave(new TextEncoder().encode(JSON.stringify(clean, null, 1)), [
+              { name: "Content-Type", value: "application/json" },
+              { name: "App-Name", value: "retarded-bull-gazette" },
+              { name: "Type", value: "post-receipt" },
+              { name: "Post-Id", value: e.id }
+            ], key);
+            rec.arweave_tx = ar.id;
+            rec.arweave = "https://gazette-vault.theretardedbull.workers.dev/ar/" + ar.id;
+            rec.arweave_deadline_height = ar.deadlineHeight;
+            patches[e.id] = { arweave_tx: ar.id, arweave: rec.arweave };
+            await api("vault/" + e.id + ".json", { method: "PUT", body: JSON.stringify({
+              message: "arweave re-sealed (deadline passed): " + e.id,
+              content: b64e(JSON.stringify(rec, null, 1)), sha: fj.sha,
+              committer: { name: "vault-bot", email: "vault-bot@users.noreply.github.com" }
+            }) });
+          } catch (err) {}
+        }
+      }
+
+      if (Object.keys(patches).length) {
+        const cr = await api("vault/index.json");
+        if (cr.ok) {
+          const cj = await cr.json();
+          let list;
+          try { list = JSON.parse(b64d(cj.content)); } catch (err) { return; }
+          list.forEach((x) => { if (patches[x.id]) Object.assign(x, patches[x.id]); });
+          await api("vault/index.json", { method: "PUT", body: JSON.stringify({
+            message: "vault: arweave confirmations (index)",
+            content: b64e(JSON.stringify(list, null, 1)), sha: cj.sha,
+            committer: { name: "vault-bot", email: "vault-bot@users.noreply.github.com" }
+          }) });
+        }
+      }
+    })());
   }
 };

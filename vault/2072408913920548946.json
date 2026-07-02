@@ -18,5 +18,7 @@
  "pipeline_version": 4,
  "arweave_tx": "C_V5hbIjd6JYFoT5aieIv4pYkd8qZzBhmpJqDSh0_p4",
  "arweave": "https://gazette-vault.theretardedbull.workers.dev/ar/C_V5hbIjd6JYFoT5aieIv4pYkd8qZzBhmpJqDSh0_p4",
- "arweave_deadline_height": 1951063
+ "arweave_deadline_height": 1951063,
+ "arweave_block": 1950869,
+ "arweave_bundle": "vDIrzxFeHWkq8PQaDTOgPedyfdfY0r6PDDaldHRPkDQ"
 }

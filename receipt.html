@@ -90,6 +90,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     <span class="stamp">FOREVER MEANS ARWEAVE</span><br>
     <span class="muted">this record is sealed on the arweave permanent network at address:</span>
     <a class="araddr" id="arAddr" target="_blank" rel="noopener"></a>
+    <span id="arStatus" style="display:block;margin:2px 0 8px;font-weight:600"></span>
     <span class="muted" id="meta"></span><br>
     <span class="muted">once filed, the delete button can't reach it.</span>
   </div>
@@ -180,6 +181,36 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       var addr = document.getElementById("arAddr");
       addr.textContent = "ar://" + tx;
       addr.href = rec.arweave || (VAULT_API + "/ar/" + tx);
+
+      // Settlement status: stamped in the record, else asked of Arweave live
+      var st = document.getElementById("arStatus");
+      function confirmed(h, bundle) {
+        st.style.color = "#1c5c2e";
+        st.innerHTML = "";
+        st.appendChild(document.createTextNode("✓ CONFIRMED ON ARWEAVE — block " + h + " · "));
+        var v = el("a", null, "verify on-chain ↗");
+        v.href = "https://viewblock.io/arweave/tx/" + (bundle || tx);
+        v.target = "_blank"; v.rel = "noopener"; v.style.color = "#1c5c2e";
+        st.appendChild(v);
+      }
+      function pending() {
+        st.style.color = "#7a1f1f";
+        st.textContent = "⧗ PENDING — posting to arweave now" +
+          (rec.arweave_deadline_height ? " (guaranteed on-chain by block " + rec.arweave_deadline_height + ")" : "") +
+          " — check back shortly";
+      }
+      if (rec.arweave_block) {
+        confirmed(rec.arweave_block, rec.arweave_bundle);
+      } else if (tx) {
+        pending();
+        fetch("https://arweave.net/graphql", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ query: '{ transaction(id: "' + tx + '") { id bundledIn { id } block { height } } }' })
+        }).then(function (r) { return r.json(); }).then(function (g) {
+          var t = g && g.data && g.data.transaction;
+          if (t) confirmed((t.block && t.block.height) || "confirmed, awaiting height", t.bundledIn && t.bundledIn.id);
+        }).catch(function () {});
+      }
       var meta = document.getElementById("meta");
       meta.textContent = "posted " + (rec.posted_at || "?") + " · filed " + (rec.saved_at || "?") + " · original: " + rec.url;
 
