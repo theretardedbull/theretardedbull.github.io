@@ -54,6 +54,19 @@ export default {
         headers: { ...CORS, "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" }
       });
     }
+    // ---- live ledger: straight from git, no Pages deploy in the path ----
+    if (req.method === "GET" && u.pathname === "/ledger") {
+      try {
+        const r = await fetch("https://raw.githubusercontent.com/" + env.REPO + "/main/vault/index.json", {
+          headers: { "user-agent": "gazette-vault-worker" }
+        });
+        if (r.ok) return new Response(await r.text(), {
+          headers: { ...CORS, "content-type": "application/json", "cache-control": "no-store" }
+        });
+      } catch (e) {}
+      return json([], 200);
+    }
+
     // ---- receipt doorway: serves Arweave content via our domain (home-ISP filters
     // block some public gateways; Cloudflare's network isn't filtered) ----
     if (req.method === "GET" && u.pathname.startsWith("/ar/")) {
