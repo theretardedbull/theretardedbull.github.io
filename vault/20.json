@@ -1,0 +1,17 @@
+{
+ "id": "20",
+ "handle": "jack",
+ "url": "https://x.com/jack/status/20",
+ "posted_at": "2006-03-21T20:50:14.000Z",
+ "saved_at": "2026-07-02T09:14:01.653Z",
+ "image": null,
+ "view_url": "https://archive.today/newest/https://x.com/jack/status/20",
+ "record": "https://gazette-vault.theretardedbull.workers.dev/vault/20.json",
+ "forever": "https://theretardedbull.xyz/vault/20.json",
+ "author_name": "jack",
+ "text": "just setting up my twttr",
+ "tweet_html": null,
+ "tweet_missing_at_save": false,
+ "archive_today": "https://archive.ph/newest/https://x.com/jack/status/20",
+ "pipeline_version": 4
+}
