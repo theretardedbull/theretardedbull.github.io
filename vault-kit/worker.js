@@ -54,6 +54,36 @@ export default {
         headers: { ...CORS, "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" }
       });
     }
+    // ---- receipt doorway: serves Arweave content via our domain (home-ISP filters
+    // block some public gateways; Cloudflare's network isn't filtered) ----
+    if (req.method === "GET" && u.pathname.startsWith("/ar/")) {
+      const txid = u.pathname.split("/").pop() || "";
+      if (!/^[A-Za-z0-9_-]{20,60}$/.test(txid)) return json({ ok: false, error: "bad tx id" }, 400);
+      const cacheKey = new Request(u.origin + "/ar/" + txid);
+      const hit = await caches.default.match(cacheKey);
+      if (hit) return hit;
+      let upstream = null;
+      for (const gw of ["https://gateway.irys.xyz/", "https://arweave.net/raw/", "https://arweave.net/"]) {
+        try {
+          const r = await fetch(gw + txid, { redirect: "follow" });
+          const ct = r.headers.get("content-type") || "";
+          if (r.ok && !ct.includes("text/html")) { upstream = r; break; }
+        } catch (e) {}
+      }
+      if (!upstream) return json({ ok: false, error: "not yet retrievable from gateways — try again shortly", tx: txid }, 503);
+      const body = await upstream.arrayBuffer();
+      const resp = new Response(body, {
+        headers: {
+          ...CORS,
+          "content-type": upstream.headers.get("content-type") || "application/json",
+          "cache-control": "public, max-age=31536000, immutable",
+          "x-arweave-tx": txid
+        }
+      });
+      ctx.waitUntil(caches.default.put(cacheKey, resp.clone()));
+      return resp;
+    }
+
     // ---- the exhibit: renders the saved post as an image, from the permanent record ----
     if (req.method === "GET" && u.pathname.startsWith("/snapshot/")) {
       const sid = (u.pathname.split("/").pop() || "").replace(/\.svg$/, "");
@@ -228,7 +258,8 @@ export default {
           { name: "Type", value: "post-receipt" },
           { name: "Post-Id", value: id }
         ], key);
-        rec.arweave = ar.url;
+        rec.arweave_tx = ar.id;
+        rec.arweave = base + "/ar/" + ar.id;
       } catch (e) { warnings.push("arweave: " + (e && e.message)); }
     } else warnings.push("arweave key not configured");
 
