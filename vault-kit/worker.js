@@ -99,8 +99,22 @@ export default {
       warnings.push("oembed error");
     }
 
-    // ---- 4. third-party archives (fire-and-forget, never block the save) ----
-    ctx.waitUntil(fetch("https://web.archive.org/save/" + clean).catch(function () {}));
+    // ---- 4. third-party archives (never block the save) ----
+    // With WAYBACK_KEYS ("access:secret" from archive.org account settings) this uses the
+    // official authenticated Save Page Now API — reliable, rate-limit-friendly, job-tracked.
+    if (env.WAYBACK_KEYS) {
+      ctx.waitUntil(fetch("https://web.archive.org/save", {
+        method: "POST",
+        headers: {
+          "authorization": "LOW " + env.WAYBACK_KEYS,
+          "accept": "application/json",
+          "content-type": "application/x-www-form-urlencoded"
+        },
+        body: "url=" + encodeURIComponent(clean)
+      }).catch(function () {}));
+    } else {
+      ctx.waitUntil(fetch("https://web.archive.org/save/" + clean).catch(function () {}));
+    }
     ctx.waitUntil(fetch("https://archive.ph/submit/", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -108,6 +122,9 @@ export default {
     }).catch(function () {}));
 
     // ---- 5. the permanent record ----
+    const text = oembed && oembed.html
+      ? oembed.html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+      : null;
     const rec = {
       id: id,
       handle: handle,
@@ -115,31 +132,66 @@ export default {
       saved_at: new Date().toISOString(),
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
       record: base + "/vault/" + id + ".json",
+      forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: oembed && oembed.author_name || null,
+      text: text,
       tweet_html: oembed && oembed.html || null,
       tweet_missing_at_save: !(oembed && oembed.html),
       wayback: "https://web.archive.org/web/2*/" + clean,
       archive_today: "https://archive.ph/newest/" + clean,
-      pipeline_version: 2
+      pipeline_version: 3
     };
     await env.BUCKET.put("vault/" + id + ".json", JSON.stringify(rec, null, 2), {
       httpMetadata: { contentType: "application/json" }
     });
 
-    // ---- 6. optional tamper-evident receipt on GitHub ----
+    // ---- 6. tamper-evident receipts in git: the record + the public ledger index ----
+    // Awaited (not fire-and-forget): the site's shared ledger is built from these files,
+    // so a git failure must surface in warnings, never pass silently.
     if (env.GH_TOKEN && env.REPO) {
-      ctx.waitUntil(fetch("https://api.github.com/repos/" + env.REPO + "/contents/vault/" + id + ".json", {
-        method: "PUT",
-        headers: {
+      const gh = (path, init) => fetch("https://api.github.com/repos/" + env.REPO + "/contents/" + path, Object.assign({}, init, {
+        headers: Object.assign({
           "authorization": "Bearer " + env.GH_TOKEN,
           "user-agent": "rug-vault-worker",
           "accept": "application/vnd.github+json"
-        },
-        body: JSON.stringify({
-          message: "vault: @" + handle + " status " + id,
-          content: btoa(unescape(encodeURIComponent(JSON.stringify(rec, null, 2))))
-        })
-      }).catch(function () {}));
+        }, (init && init.headers) || {})
+      }));
+      const b64e = (s) => btoa(unescape(encodeURIComponent(s)));
+      const b64d = (s) => decodeURIComponent(escape(atob(String(s).replace(/\n/g, ""))));
+      const put = (path, content, sha, note) => gh(path, {
+        method: "PUT",
+        body: JSON.stringify(Object.assign({
+          message: "vault: @" + handle + " status " + id + (note || ""),
+          content: b64e(content),
+          committer: { name: "vault-bot", email: "vault-bot@users.noreply.github.com" }
+        }, sha ? { sha: sha } : {}))
+      });
+      try {
+        const r1 = await put("vault/" + id + ".json", JSON.stringify(rec, null, 1));
+        if (!r1.ok) warnings.push("git record write http " + r1.status);
+        const entry = {
+          id: id, handle: handle, url: clean,
+          author_name: rec.author_name, text: text, image: rec.image,
+          saved_at: rec.saved_at, tweet_missing_at_save: rec.tweet_missing_at_save
+        };
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const cur = await gh("vault/index.json?ref=main");
+          let list = [], sha;
+          if (cur.ok) {
+            const j = await cur.json();
+            sha = j.sha;
+            try { list = JSON.parse(b64d(j.content)); } catch (e) { list = []; }
+          }
+          list = [entry].concat(list.filter(function (x) { return x.id !== id; }));
+          const r2 = await put("vault/index.json", JSON.stringify(list, null, 1), sha, " (index)");
+          if (r2.ok) break;
+          if (r2.status !== 409) { warnings.push("git index write http " + r2.status); break; }
+        }
+      } catch (e) {
+        warnings.push("git receipt error: " + (e && e.message));
+      }
+    } else {
+      warnings.push("git receipts not configured (set GH_TOKEN + REPO)");
     }
 
     return json({ ok: true, warnings: warnings, ...rec });

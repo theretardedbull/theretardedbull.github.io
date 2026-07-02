@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Retarded Bull Gazette — all the rugs that's fit to print</title>
-<meta name="description" content="A living newspaper that permanently archives pump-and-dump shill tweets before they're deleted. Paste a tweet URL into the Saver — once filed, the delete button can't reach it.">
+<meta name="description" content="A living newspaper that permanently archives pump-and-dump shill posts before they're deleted. Paste a post URL into the Saver — once filed, the delete button can't reach it.">
 <link rel="canonical" href="https://theretardedbull.xyz/">
 <meta name="theme-color" content="#efe5cb">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Retarded Bull Gazette">
 <meta property="og:title" content="The Retarded Bull Gazette — all the rugs that's fit to print">
-<meta property="og:description" content="A living newspaper that permanently archives pump-and-dump shill tweets before they're deleted.">
+<meta property="og:description" content="A living newspaper that permanently archives pump-and-dump shill posts before they're deleted.">
 <meta property="og:url" content="https://theretardedbull.xyz/">
 <meta property="og:image" content="https://theretardedbull.xyz/social-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The Retarded Bull Gazette — all the rugs that's fit to print">
-<meta name="twitter:description" content="A living newspaper that permanently archives pump-and-dump shill tweets before they're deleted.">
+<meta name="twitter:description" content="A living newspaper that permanently archives pump-and-dump shill posts before they're deleted.">
 <meta name="twitter:image" content="https://theretardedbull.xyz/social-card.png">
 <link rel="icon" href="bull-editor.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,6 +69,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 .file-it:active{transform:rotate(-1.5deg) translateY(1px)}
 .saver-status{font-family:'IBM Plex Mono',monospace;font-size:11.5px;margin-top:8px;min-height:15px;color:var(--ink)}
 .saver-status.err{color:var(--oxblood)}
+.saver-status a{color:var(--oxblood);font-weight:600;text-decoration:underline}
 .small-print{font-size:11px;font-style:italic;margin-top:6px;letter-spacing:.04em;color:var(--sepia)}
 
 .ledger{margin-top:10px;border:1px solid var(--ink);background:var(--paper-card)}
@@ -153,14 +154,14 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   <section class="saver">
     <div class="saver-head">
       <div class="saver-title">The Saver — open during construction</div>
-      <div class="saver-count">IN THE VAULT: <b id="vaultCount">0</b> TWEETS</div>
+      <div class="saver-count">IN THE VAULT: <b id="vaultCount">0</b> POSTS</div>
     </div>
     <div class="saver-row">
       <input class="saver-input" id="tweetUrl" type="url" inputmode="url" placeholder="https://x.com/handle/status/1234567890" autocomplete="off" autocapitalize="off" spellcheck="false">
       <button class="file-it" id="fileIt" type="button">FILE IT</button>
     </div>
     <div class="saver-status" id="saveStatus" role="status" aria-live="polite"></div>
-    <div class="small-print">*** to save a tweet — paste the URL of the post BEFORE it is deleted; once filed, the delete button can't reach it ***</div>
+    <div class="small-print">*** to save a post — paste its URL BEFORE it is deleted; once filed, the delete button can't reach it ***</div>
     <div class="ledger" id="ledger"></div>
   </section>
 
@@ -176,7 +177,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   "use strict";
 
   // Site-wide settings (see design/README.md — Tweakable props)
-  var GITHUB_REPO = "";        // "owner/repo" → the Saver opens a prefilled save issue instead of Wayback
+  var VAULT_API = "";          // vault worker endpoint — set at deploy; empty = wayback-tab fallback mode
   var REDACT_HANDLES = false;  // true → blur all @handles (legal-safe screenshot mode)
 
   var KEY = "rugreport_vault_v1";
@@ -196,6 +197,42 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   var DEMO = new URLSearchParams(location.search).get("demo") === "1";
 
   var rows = load();
+  var globalRows = [];
+
+  // The public vault — one shared ledger, same for every visitor, committed forever in git
+  fetch("/vault/index.json")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (list) {
+      if (!Array.isArray(list)) return;
+      globalRows = list.map(function (rec) {
+        return {
+          handle: rec.handle, id: rec.id, url: rec.url,
+          time: fmtWhen(rec.saved_at),
+          text: rec.text || null, author: rec.author_name || null,
+          image: rec.image || null,
+          permanent: true
+        };
+      });
+      render();
+    })
+    .catch(function () {});
+
+  function fmtWhen(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toDateString() === new Date().toDateString()
+      ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  // Local saves not yet committed to the public vault, newest first, then the vault
+  function mergedRows() {
+    var inVault = {};
+    globalRows.forEach(function (g) { inVault[g.id] = true; });
+    return rows.filter(function (r) { return !inVault[r.id]; }).concat(globalRows);
+  }
+
   if (DEMO) {
     rows = [
       { handle: "not_selling_ser", id: "1808642042069421337", url: "https://x.com/not_selling_ser/status/1808642042069421337",
@@ -227,27 +264,42 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     var v = (input.value || "").trim();
     var m = v.match(/^https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\/([A-Za-z0-9_]{1,15})\/status\/(\d+)/i);
     if (!m) {
-      setStatus("✗ X.COM / TWITTER.COM STATUS LINKS ONLY — PASTE THE FULL TWEET URL", false);
+      setStatus("✗ X.COM / TWITTER.COM POST LINKS ONLY — PASTE THE FULL POST URL", false);
       return;
     }
-    var clean = "https://x.com/" + m[1] + "/status/" + m[2];
+    var handle = m[1], id = m[2];
+    var clean = "https://x.com/" + handle + "/status/" + id;
     rows.unshift({
-      handle: m[1], id: m[2], url: clean,
+      handle: handle, id: id, url: clean,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "SAVED"
     });
     rows = rows.slice(0, PERSIST_CAP);
     persist();
     render();
-    fetchText(clean, m[2]);
     input.value = "";
-    if (GITHUB_REPO) {
-      setStatus("✓ SAVED LOCALLY — OPENING GITHUB ISSUE: SUBMIT IT AND THE VAULT BOT STORES IT FOREVER", true);
-      try {
-        window.open("https://github.com/" + GITHUB_REPO + "/issues/new?title=" +
-          encodeURIComponent("save: " + clean) + "&body=" + encodeURIComponent("Filed from the Saver."), "_blank", "noopener");
-      } catch (e) {}
+    if (VAULT_API) {
+      setStatus("⧗ FILING TO THE VAULT — COMMITTING THE RECEIPT…", true);
+      fetch(VAULT_API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: clean }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.ok) throw new Error("vault refused");
+          rows = rows.map(function (r) {
+            return r.id === id ? Object.assign({}, r, { text: j.text || r.text, author: j.author_name || r.author, image: j.image || null, permanent: true }) : r;
+          });
+          persist();
+          render();
+          setStatus(j.duplicate
+            ? "✓ ALREADY IN THE VAULT — ONE RECORD PER POST, FIRST SAVE WINS"
+            : "✓ FILED FOREVER — RECEIPT №" + id + " COMMITTED TO THE VAULT", true);
+        })
+        .catch(function () {
+          fetchText(clean, id);
+          setStatus("✓ SAVED LOCALLY — VAULT UNREACHABLE, WAYBACK SNAPSHOT OPENING IN NEW TAB", true);
+          try { window.open("https://web.archive.org/save/" + clean, "_blank", "noopener"); } catch (e) {}
+        });
     } else {
+      fetchText(clean, id);
       setStatus("✓ SAVED LOCALLY — WAYBACK SNAPSHOT OPENING IN NEW TAB (LET IT FINISH)", true);
       try { window.open("https://web.archive.org/save/" + clean, "_blank", "noopener"); } catch (e) {}
     }
@@ -279,9 +331,10 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
   }
 
   function render() {
-    countEl.textContent = String(rows.length);
+    var list = mergedRows();
+    countEl.textContent = String(list.length);
     ledgerEl.textContent = "";
-    rows.slice(0, DISPLAY_CAP).forEach(function (r) {
+    list.slice(0, DISPLAY_CAP).forEach(function (r) {
       var row = el("div", "ledger-row");
 
       var handle = el("span", "ledger-handle");
@@ -296,7 +349,7 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       var inner = el("span", "ledger-ticker-inner");
       var t = r.text
         ? "“" + r.text + "”" + (r.author ? " — " + r.author : "")
-        : "reading the words back from the archive…";
+        : (r.permanent ? "words not recovered at save time — see the archive links" : "reading the words back from the archive…");
       inner.appendChild(el("span", null, t));
       inner.appendChild(el("span", null, t));
       ticker.appendChild(inner);
@@ -306,10 +359,14 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       row.appendChild(el("span", "ledger-saved", "saved ✓"));
 
       var links = el("span", "ledger-links");
-      [["wayback ↗", "https://web.archive.org/save/" + r.url, "ox"],
+      var linkDefs = [];
+      if (r.permanent) linkDefs.push(["receipt ↗", "/vault/" + r.id + ".json", "ox"]);
+      if (r.image) linkDefs.push(["exhibit ↗", r.image, "ox"]);
+      linkDefs.concat([
+       ["wayback ↗", "https://web.archive.org/save/" + r.url, "ox"],
        ["arch.today ↗", "https://archive.ph/?url=" + encodeURIComponent(r.url), "ox"],
        ["view ↗", "https://web.archive.org/web/2*/" + r.url, "ink"]
-      ].forEach(function (l) {
+      ]).forEach(function (l) {
         var a = el("a", l[2], l[0]);
         a.href = l[1];
         a.target = "_blank";

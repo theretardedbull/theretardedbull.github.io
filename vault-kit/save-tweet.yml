@@ -81,6 +81,28 @@ jobs:
             fs.mkdirSync("vault", { recursive: true });
             fs.writeFileSync("vault/" + id + ".json", JSON.stringify(rec, null, 2));
 
+      - name: Rebuild vault index
+        if: ${{ steps.parse.outputs.url }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const files = fs.readdirSync("vault").filter((f) => /^\d+\.json$/.test(f));
+            const recs = files.map((f) => {
+              try { return JSON.parse(fs.readFileSync("vault/" + f, "utf8")); } catch (e) { return null; }
+            }).filter(Boolean);
+            recs.sort((a, b) => String(b.saved_at || "").localeCompare(String(a.saved_at || "")));
+            const index = recs.map((r) => ({
+              id: r.id,
+              handle: r.handle,
+              url: r.url,
+              author_name: r.author_name || null,
+              text: r.tweet_html ? r.tweet_html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : null,
+              saved_at: r.saved_at,
+              tweet_missing_at_save: !!r.tweet_missing_at_save
+            }));
+            fs.writeFileSync("vault/index.json", JSON.stringify(index, null, 1));
+
       - name: Commit forever
         if: ${{ steps.parse.outputs.url }}
         run: |
@@ -99,5 +121,5 @@ jobs:
             const url = "${{ steps.parse.outputs.url }}";
             const repoUrl = "https://github.com/" + context.repo.owner + "/" + context.repo.repo;
             await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
-              body: "✅ **Saved forever.**\n\n- Record: " + repoUrl + "/blob/main/vault/" + id + ".json\n- Wayback: https://web.archive.org/web/2*/" + url + "\n- archive.today: https://archive.ph/newest/" + url + "\n\nIf the post gets deleted, these survive." });
+              body: "✅ **Saved forever.**\n\n- Forever link: https://theretardedbull.xyz/vault/" + id + ".json\n- Record: " + repoUrl + "/blob/main/vault/" + id + ".json\n- Wayback: https://web.archive.org/web/2*/" + url + "\n- archive.today: https://archive.ph/newest/" + url + "\n\nIf the post gets deleted, these survive." });
             await github.rest.issues.update({ ...context.repo, issue_number: context.issue.number, state: "closed" });

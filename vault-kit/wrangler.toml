@@ -1,0 +1,17 @@
+name = "gazette-vault"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+
+[vars]
+REPO = "theretardedbull/theretardedbull.github.io"
+SITE_BASE = "https://theretardedbull.xyz"
+# PUBLIC_BASE = ""   # set to a custom API domain later if wanted; defaults to the worker URL
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "rug-vault"
+
+# secrets (set with: wrangler secret put <NAME>):
+#   SCREENSHOTONE_KEY — screenshotone.com access key (screenshot pipeline)
+#   GH_TOKEN          — GitHub fine-grained token, Contents: Read&Write on REPO
+#   WAYBACK_KEYS      — optional "access:secret" from archive.org (authenticated Save Page Now)
