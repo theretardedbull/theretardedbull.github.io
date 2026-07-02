@@ -326,14 +326,15 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
           setStatus("✓ FILED FOREVER — RECEIPT №" + id + " COMMITTED TO THE VAULT", true);
         })
         .catch(function () {
-          fetchText(clean, id);
-          setStatus("✓ SAVED LOCALLY — VAULT UNREACHABLE; ARCHIVE.TODAY OPENING IN NEW TAB — PRESS ITS SAVE BUTTON", true);
-          try { window.open("https://archive.ph/?url=" + encodeURIComponent(clean), "_blank", "noopener"); } catch (e) {}
+          rows = rows.filter(function (r) { return r.id !== id; });
+          persist();
+          render();
+          input.value = clean;
+          setStatus("✗ THE VAULT ENGINE HICCUPED — NOTHING LOST; PRESS FILE IT AGAIN IN A MOMENT", false);
         });
     } else {
       fetchText(clean, id);
-      setStatus("✓ SAVED LOCALLY — ARCHIVE.TODAY OPENING IN NEW TAB — PRESS ITS SAVE BUTTON TO FILE THE PROOF", true);
-      try { window.open("https://archive.ph/?url=" + encodeURIComponent(clean), "_blank", "noopener"); } catch (e) {}
+      setStatus("✓ HELD IN YOUR LOCAL LEDGER — VAULT ENGINE INSTALLATION IN PROGRESS; PERMANENT FILING RESUMES SHORTLY", true);
     }
   }
 
@@ -392,11 +393,9 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       row.appendChild(el("span", "ledger-saved", "saved ✓"));
 
       var links = el("span", "ledger-links");
-      var linkDefs = [];
+      var linkDefs = [["view ↗", r.image || ("https://archive.ph/newest/" + r.url), "ox"]];
       if (r.permanent) linkDefs.push(["receipt ↗", "/vault/" + r.id + ".json", "ox"]);
-      if (r.image) linkDefs.push(["exhibit ↗", r.image, "ox"]);
       linkDefs.concat([
-       ["arch.today ↗", "https://archive.ph/?url=" + encodeURIComponent(r.url), "ox"],
        ["post ↗", r.url, "ink"]
       ]).forEach(function (l) {
         var a = el("a", l[2], l[0]);
