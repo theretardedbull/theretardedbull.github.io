@@ -15,7 +15,8 @@
  "archive_today": "https://archive.ph/newest/https://x.com/MitchDraws/status/2072366151800390012",
  "pipeline_version": 4,
  "snapshot": "https://gazette-vault.theretardedbull.workers.dev/snapshot/2072366151800390012.svg",
- "arweave": "https://gateway.irys.xyz/2KVUBCzEQhW2TqutZyPXRMS6KEGRgFjMxQP4Y6jHMGpP",
+ "arweave": "https://gazette-vault.theretardedbull.workers.dev/ar/2KVUBCzEQhW2TqutZyPXRMS6KEGRgFjMxQP4Y6jHMGpP",
  "avatar_url": null,
- "photo": null
+ "photo": null,
+ "arweave_tx": "2KVUBCzEQhW2TqutZyPXRMS6KEGRgFjMxQP4Y6jHMGpP"
 }

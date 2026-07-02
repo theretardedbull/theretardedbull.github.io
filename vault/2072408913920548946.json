@@ -17,5 +17,6 @@
  "tweet_missing_at_save": false,
  "archive_today": "https://archive.ph/newest/https://x.com/MitchDraws/status/2072408913920548946",
  "pipeline_version": 4,
- "arweave": "https://gateway.irys.xyz/FCGqEzDbYBGpU8GCWwrpzXRwqgEAp6KaGajK4BCWJmAG"
+ "arweave": "https://gazette-vault.theretardedbull.workers.dev/ar/FCGqEzDbYBGpU8GCWwrpzXRwqgEAp6KaGajK4BCWJmAG",
+ "arweave_tx": "FCGqEzDbYBGpU8GCWwrpzXRwqgEAp6KaGajK4BCWJmAG"
 }
