@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Receipt — The Retarded Bull Gazette</title>
+<script>try{if(localStorage.getItem("rugreport_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <meta name="robots" content="noindex">
 <link rel="icon" href="bull-editor.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,14 +13,32 @@
 <style>
 :root{
   --ink:#231d14; --ink-muted:#3d3426; --sepia:#5c4f38; --rule:#d8cba6;
-  --oxblood:#7a1f1f; --paper-card:#fbf6e8; --paper-panel:#f2ead2; --cream:#f0e6cd;
+  --oxblood:#7a1f1f; --ok:#1c5c2e; --paper-card:#fbf6e8; --paper-panel:#f2ead2; --cream:#f0e6cd;
+  --stamp-bg:rgba(251,246,232,.94); --desk:#e7dab9;
+  --sheet-grad:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7dab9 100%);
+  --tw-bg:#fff; --tw-border:#e3e6e8; --tw-text:#0f1419; --tw-muted:#536471; --tw-line:#eff3f4;
+}
+[data-theme="dark"]{
+  --ink:#e9dfc8; --ink-muted:#c9bd9f; --sepia:#9c8a5e; --rule:#3a3226;
+  --oxblood:#d9b95c; --ok:#57c785; --paper-card:#1b1712; --paper-panel:#171310; --cream:#14120e;
+  --stamp-bg:rgba(15,14,11,.92); --desk:#0b0a08;
+  --sheet-grad:radial-gradient(ellipse at 50% 20%, #1a1610 0%, #14120e 62%, #0f0e0b 100%);
+  --tw-bg:#16181c; --tw-border:#2f3336; --tw-text:#e7e9ea; --tw-muted:#71767b; --tw-line:#2f3336;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',Georgia,serif}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard TT',Georgia,serif}
 .sheet{max-width:1240px;margin:0 auto;min-height:100vh;min-height:100dvh;
-  background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7dab9 100%);
+  background:var(--sheet-grad);
   display:flex;flex-direction:column;align-items:center;padding:26px clamp(14px,3vw,40px) 60px}
+.backbtn{align-self:flex-start;margin-bottom:14px;border:2px solid var(--oxblood);color:var(--oxblood);
+  background:var(--stamp-bg);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11.5px;
+  letter-spacing:.14em;padding:7px 12px;text-decoration:none;transform:rotate(-1.5deg)}
+.backbtn:hover{background:var(--oxblood);color:var(--cream)}
+.lights{position:fixed;right:14px;bottom:14px;z-index:60;border:2px solid var(--oxblood);color:var(--oxblood);
+  background:var(--stamp-bg);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;
+  letter-spacing:.14em;padding:7px 11px;cursor:pointer;transform:rotate(-2deg)}
+.lights:hover{background:var(--oxblood);color:var(--cream)}
 .mast{font-size:clamp(22px,4vw,30px);font-weight:700;font-variant:small-caps;line-height:1.1;text-align:center}
 .mast a{color:inherit;text-decoration:none}
 .case{font-family:'IBM Plex Mono',monospace;font-size:clamp(10px,1.8vw,13px);letter-spacing:.08em;
@@ -36,33 +55,33 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 .rail.top{top:0}.rail.bot{bottom:0}
 .gotcha{position:absolute;top:-10px;right:-8px;transform:rotate(-9deg);z-index:5;
   border:3.5px solid var(--oxblood);color:var(--oxblood);font-family:'IBM Plex Mono',monospace;font-weight:600;
-  font-size:clamp(17px,3.4vw,26px);letter-spacing:.22em;padding:6px 16px;background:rgba(251,246,232,.94);
-  box-shadow:4px 5px 0 rgba(35,29,20,.28)}
+  font-size:clamp(17px,3.4vw,26px);letter-spacing:.22em;padding:6px 16px;background:var(--stamp-bg);
+  box-shadow:4px 5px 0 rgba(0,0,0,.3)}
 
-.card{position:relative;z-index:2;background:#fff;border:1px solid #e3e6e8;border-radius:16px;width:min(560px,100%);
-  padding:18px 20px 14px;box-shadow:0 10px 26px rgba(35,29,20,.30);
+.card{position:relative;z-index:2;background:var(--tw-bg);border:1px solid var(--tw-border);border-radius:16px;width:min(560px,100%);
+  padding:18px 20px 14px;box-shadow:0 10px 26px rgba(0,0,0,.35);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .head{display:flex;align-items:center;gap:10px}
 .av{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none;background:#eee}
-.avf{width:48px;height:48px;border-radius:50%;flex:none;background:var(--oxblood);color:#fff;
+.avf{width:48px;height:48px;border-radius:50%;flex:none;background:#7a1f1f;color:#fff;
   display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
 .who{flex:1;min-width:0;line-height:1.25}
-.nm{font-weight:700;font-size:15.5px;color:#0f1419;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hd{font-size:15px;color:#536471}
-.xmark{font-size:22px;color:#0f1419;font-weight:700;flex:none}
-.txt{font-size:23px;line-height:1.35;color:#0f1419;margin-top:14px;overflow-wrap:break-word;white-space:pre-wrap}
+.nm{font-weight:700;font-size:15.5px;color:var(--tw-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd{font-size:15px;color:var(--tw-muted)}
+.xmark{font-size:22px;color:var(--tw-text);font-weight:700;flex:none}
+.txt{font-size:23px;line-height:1.35;color:var(--tw-text);margin-top:14px;overflow-wrap:break-word;white-space:pre-wrap}
 .txt.small{font-size:17px}
-.txt.missing{color:#536471;font-style:italic;font-size:17px}
-.ph{margin-top:14px;width:100%;border-radius:16px;border:1px solid #e3e6e8;display:block}
-.when{margin-top:14px;font-size:15px;color:#536471}
-.stats{margin-top:10px;padding-top:10px;border-top:1px solid #eff3f4;font-size:14px;color:#536471}
+.txt.missing{color:var(--tw-muted);font-style:italic;font-size:17px}
+.ph{margin-top:14px;width:100%;border-radius:16px;border:1px solid var(--tw-border);display:block}
+.when{margin-top:14px;font-size:15px;color:var(--tw-muted)}
+.stats{margin-top:10px;padding-top:10px;border-top:1px solid var(--tw-line);font-size:14px;color:var(--tw-muted)}
 .stats span{margin-right:14px}
-.stats b{color:#0f1419;font-weight:700}
+.stats b{color:var(--tw-text);font-weight:700}
 
 .proof{width:min(720px,100%);margin-top:26px;border:2px dashed var(--ink);background:var(--paper-panel);
   padding:16px clamp(14px,3vw,22px);font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.8;color:var(--ink)}
 .proof .stamp{display:inline-block;border:2.5px solid var(--oxblood);color:var(--oxblood);
-  background:rgba(251,246,232,.9);padding:4px 12px;font-weight:600;letter-spacing:.16em;font-size:12px;
+  background:var(--stamp-bg);padding:4px 12px;font-weight:600;letter-spacing:.16em;font-size:12px;
   transform:rotate(-1.5deg);margin-bottom:10px}
 .araddr{display:block;font-size:clamp(11px,2.4vw,15px);font-weight:600;letter-spacing:.02em;
   color:var(--oxblood);word-break:break-all;text-decoration:underline;margin:2px 0 8px}
@@ -70,11 +89,15 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
 .proof a{color:var(--oxblood);word-break:break-all}
 .foot{margin-top:24px;font-size:12.5px;color:var(--ink-muted);font-style:italic;text-align:center}
 .foot a{color:var(--ink)}
+.okline{color:var(--ok)} .okline a,a.okline{color:var(--ok)}
+.pendline{color:var(--err,#7a1f1f)}
+[data-theme="dark"] .pendline{color:#e05353}
 .err{font-family:'Special Elite',monospace;margin-top:40px;text-align:center;font-size:15px}
 </style>
 </head>
 <body>
 <div class="sheet">
+  <a class="backbtn" href="/">&#8592; BACK TO THE FRONT PAGE</a>
   <div class="mast"><a href="/">The Retarded Bull Gazette</a></div>
   <div class="case" id="caseLine">RETRIEVING THE FILE…</div>
 
@@ -185,16 +208,18 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       // Settlement status: stamped in the record, else asked of Arweave live
       var st = document.getElementById("arStatus");
       function confirmed(h, bundle) {
-        st.style.color = "#1c5c2e";
+        st.style.color = "";
+        st.className = "okline";
         st.innerHTML = "";
         st.appendChild(document.createTextNode("✓ CONFIRMED ON ARWEAVE — block " + h + " · "));
         var v = el("a", null, "verify on-chain ↗");
         v.href = "https://viewblock.io/arweave/tx/" + (bundle || tx);
-        v.target = "_blank"; v.rel = "noopener"; v.style.color = "#1c5c2e";
+        v.target = "_blank"; v.rel = "noopener"; v.className = "okline";
         st.appendChild(v);
       }
       function pending() {
-        st.style.color = "#7a1f1f";
+        st.style.color = "";
+        st.className = "pendline";
         st.textContent = "⧗ PENDING — posting to arweave now" +
           (rec.arweave_deadline_height ? " (guaranteed on-chain by block " + rec.arweave_deadline_height + ")" : "") +
           " — check back shortly";
@@ -218,6 +243,23 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
       document.getElementById("proof").style.display = "block";
     })
     .catch(fail);
+})();
+</script>
+<button class="lights" id="lights" type="button">LIGHTS OUT</button>
+<script>
+(function () {
+  var b = document.getElementById("lights");
+  function label() {
+    b.textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "LIGHTS ON" : "LIGHTS OUT";
+  }
+  b.addEventListener("click", function () {
+    var dark = document.documentElement.getAttribute("data-theme") === "dark";
+    if (dark) document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", "dark");
+    try { localStorage.setItem("rugreport_theme", dark ? "light" : "dark"); } catch (e) {}
+    label();
+  });
+  label();
 })();
 </script>
 </body>
