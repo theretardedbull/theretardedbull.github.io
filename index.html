@@ -235,11 +235,14 @@ body{margin:0;background:#e7dab9;color:var(--ink);font-family:'Old Standard TT',
     try { return new Date(Number((BigInt(id) >> 22n) + 1288834974657n)).toISOString(); } catch (e) { return null; }
   }
 
-  // Local saves not yet committed to the public vault, newest first, then the vault
+  // Local pending saves + the public vault, ordered by when the post was made (newest first)
   function mergedRows() {
     var inVault = {};
     globalRows.forEach(function (g) { inVault[g.id] = true; });
-    return rows.filter(function (r) { return !inVault[r.id]; }).concat(globalRows);
+    var all = rows.filter(function (r) { return !inVault[r.id]; }).concat(globalRows);
+    return all.slice().sort(function (a, b) {
+      return String(b.posted || "").localeCompare(String(a.posted || ""));
+    });
   }
 
   if (DEMO) {

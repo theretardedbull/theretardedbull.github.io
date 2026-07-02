@@ -173,7 +173,7 @@ export default {
       image: imageSaved ? base + "/shot/" + id + ".png" : null,
       view_url: imageSaved
         ? base + "/shot/" + id + ".png"
-        : "https://web.archive.org/web/https://raw.githubusercontent.com/" + (env.REPO || "") + "/main/vault/" + id + ".json",
+        : "https://github.com/" + (env.REPO || "") + "/blob/main/vault/" + id + ".json",
       record: base + "/vault/" + id + ".json",
       forever: (env.SITE_BASE || "https://theretardedbull.xyz") + "/vault/" + id + ".json",
       author_name: author,
@@ -222,6 +222,9 @@ export default {
             try { list = JSON.parse(b64d(j.content)); } catch (e) { list = []; }
           }
           list = [entry].concat(list.filter(function (x) { return x.id !== id; }));
+          list.sort(function (a, b) {
+            return String(b.posted_at || b.saved_at || "").localeCompare(String(a.posted_at || a.saved_at || ""));
+          });
           const r2 = await put("vault/index.json", JSON.stringify(list, null, 1), sha, " (index)");
           if (r2.ok) break;
           if (r2.status !== 409) { warnings.push("git index write http " + r2.status); break; }
