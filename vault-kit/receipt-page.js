@@ -26,7 +26,9 @@ function fmtNum(n) {
 
 export function renderReceiptPage(rec) {
   const pid = rec.post_id || rec.id;
-  const avatarUrl = rec.author_avatar || rec.avatar_url;
+  const okImg = (u) => /^https:\/\/(pbs|abs)\.twimg\.com\//.test(String(u || ""));
+  let avatarUrl = rec.author_avatar || rec.avatar_url;
+  if (!okImg(avatarUrl)) avatarUrl = null;
   const name = rec.author_name && rec.author_name !== "@" + rec.handle ? rec.author_name : rec.handle;
   const textHtml = esc(rec.text || "")
     .split(/\n/).map((l) => l || "&nbsp;").join("<br>");
@@ -35,7 +37,7 @@ export function renderReceiptPage(rec) {
   const avatar = avatarUrl
     ? `<img class="av" src="${esc(avatarUrl.replace("_normal", "_200x200"))}" alt="" onerror="this.outerHTML='<div class=&quot;av avf&quot;>${esc(initial)}</div>'">`
     : `<div class="av avf">${esc(initial)}</div>`;
-  const photo = rec.photo && rec.photo.url
+  const photo = rec.photo && rec.photo.url && okImg(rec.photo.url)
     ? `<img class="ph" src="${esc(rec.photo.url)}" alt="" onerror="this.remove()">`
     : "";
   const s = rec.stats || {};
@@ -45,7 +47,8 @@ export function renderReceiptPage(rec) {
     s.likes != null ? `<span><b>${fmtNum(s.likes)}</b> likes</span>` : "",
     s.views != null ? `<span><b>${fmtNum(s.views)}</b> views</span>` : "",
   ].filter(Boolean).join(" · ");
-  const arTx = rec.arweave_tx || (rec.arweave || "").split("/").pop() || "";
+  let arTx = rec.arweave_tx || (rec.arweave || "").split("/").pop() || "";
+  if (!/^[A-Za-z0-9_-]{20,60}$/.test(arTx)) arTx = "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -127,7 +130,7 @@ body{background:radial-gradient(ellipse at 50% 20%, #f7f0de 0%, #efe5cb 62%, #e7
     <span class="stamp">FOREVER MEANS ARWEAVE</span><br>
     <span class="muted">this record is sealed on the arweave permanent network at address:</span><br>
     <a href="https://arweave.net/${esc(arTx || "")}" style="font-size:15px;font-weight:700">https://arweave.net/${esc(arTx || "")}</a><br>
-    <span class="muted">posted ${esc(rec.posted_at || "?")} · filed ${esc(rec.saved_at || "?")} · original: </span><a href="${esc(rec.url)}">${esc(rec.url)}</a><br>
+    <span class="muted">posted ${esc(rec.posted_at || "?")} · filed ${esc(rec.saved_at || "?")} · original: </span>${/^https:\/\/x\.com\//.test(String(rec.url||"")) ? `<a href="${esc(rec.url)}">${esc(rec.url)}</a>` : "(url withheld)"}<br>
     <span class="muted">once filed, the delete button can't reach it.</span>
   </div>
 

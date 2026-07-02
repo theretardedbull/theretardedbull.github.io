@@ -405,9 +405,8 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         if (!j || !j.html) return;
-        var div = document.createElement("div");
-        div.innerHTML = j.html;
-        var text = (div.textContent || "").replace(/\s+/g, " ").trim()
+        var doc = new DOMParser().parseFromString(j.html, "text/html"); // inert: no scripts, no resource loads
+        var text = (doc.body.textContent || "").replace(/\s+/g, " ").trim()
           .replace(/\s*—\s*.{0,60}\(@[A-Za-z0-9_]{1,15}\)\s+\w+ \d{1,2}, \d{4}\s*$/, "");
         if (!text) return;
         rows = rows.map(function (r) {
@@ -441,6 +440,12 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
       }
       requestAnimationFrame(wire);
     })(0);
+  }
+
+  function safeHref(u) {
+    u = String(u || "");
+    if (/^https:\/\/x\.com\//.test(u) || /^https:\/\/arweave\.net\//.test(u) || u.indexOf("receipt.html?id=") === 0 || u.indexOf("https://gazette-vault.theretardedbull.workers.dev/") === 0 || u.indexOf("/vault/") === 0) return u;
+    return "#";
   }
 
   function el(tag, cls, text) {
@@ -484,7 +489,7 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
        ["post ↗", r.url, "ink"]
       ]).forEach(function (l) {
         var a = el("a", l[2], l[0]);
-        a.href = l[1];
+        a.href = safeHref(l[1]);
         a.target = "_blank";
         a.rel = "noopener";
         links.appendChild(a);

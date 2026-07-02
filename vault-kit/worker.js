@@ -172,6 +172,14 @@ export default {
 
     if (req.method !== "POST") return json({ ok: false, error: "POST {\"url\":\"https://x.com/handle/status/123\"}" }, 405);
 
+    // ---- 0a. soft anti-spam: one save per IP per 10 seconds ----
+    const ip = req.headers.get("cf-connecting-ip") || "unknown";
+    const coolKey = new Request(u.origin + "/__cooldown/" + encodeURIComponent(ip));
+    if (await caches.default.match(coolKey)) {
+      return json({ ok: false, error: "easy, editor — one filing per 10 seconds" }, 429);
+    }
+    ctx.waitUntil(caches.default.put(coolKey, new Response("1", { headers: { "cache-control": "max-age=10" } })));
+
     // ---- 0. validate (reject anything that isn't a tweet URL) ----
     let body = {};
     try { body = await req.json(); } catch (e) {}

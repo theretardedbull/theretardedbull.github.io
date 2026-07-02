@@ -150,7 +150,9 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
 
       var card = document.getElementById("card");
       var head = el("div", "head");
+      var okImg = function (u) { return /^https:\/\/(pbs|abs)\.twimg\.com\//.test(String(u || "")); };
       var avatarSrc = rec.author_avatar || rec.avatar_url;
+      if (!okImg(avatarSrc)) avatarSrc = null;
       if (avatarSrc) {
         var av = el("img", "av");
         av.src = avatarSrc.replace("_normal", "_200x200");
@@ -172,7 +174,7 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
         rec.text || "The words were already gone when the editor arrived — but the filing stands.");
       card.appendChild(txt);
 
-      if (rec.photo && rec.photo.url) {
+      if (rec.photo && rec.photo.url && okImg(rec.photo.url)) {
         var ph = el("img", "ph");
         ph.src = rec.photo.url;
         ph.alt = "";
@@ -201,6 +203,7 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
       }
 
       var tx = rec.arweave_tx || (rec.arweave || "").split("/").pop() || "";
+      if (!/^[A-Za-z0-9_-]{20,60}$/.test(tx)) tx = "";
       var addr = document.getElementById("arAddr");
       addr.textContent = "https://arweave.net/" + tx;
       addr.href = "https://arweave.net/" + tx;
@@ -237,7 +240,8 @@ body{margin:0;background:var(--desk);color:var(--ink);font-family:'Old Standard 
         }).catch(function () {});
       }
       var meta = document.getElementById("meta");
-      meta.textContent = "posted " + (rec.posted_at || "?") + " · filed " + (rec.saved_at || "?") + " · original: " + rec.url;
+      var origUrl = /^https:\/\/x\.com\//.test(String(rec.url || "")) ? rec.url : "(url withheld — failed validation)";
+      meta.textContent = "posted " + (rec.posted_at || "?") + " · filed " + (rec.saved_at || "?") + " · original: " + origUrl;
 
       document.getElementById("cell").style.display = "flex";
       document.getElementById("proof").style.display = "block";

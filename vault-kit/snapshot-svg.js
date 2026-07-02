@@ -34,6 +34,7 @@ function wrap(text, width) {
 
 async function toDataUri(url, maxBytes) {
   try {
+    if (!/^https:\/\/(pbs|abs)\.twimg\.com\//.test(String(url || ""))) return null;
     const r = await fetch(url);
     if (!r.ok) return null;
     const buf = new Uint8Array(await r.arrayBuffer());
