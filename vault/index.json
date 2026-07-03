@@ -32,5 +32,21 @@
   "saved_at": "2026-07-02T19:21:12.824Z",
   "post_missing_at_save": false,
   "arweave_block": 1950891
+ },
+ {
+  "post_id": "2072247731276411247",
+  "id": "2072247731276411247",
+  "handle": "oxansemsol",
+  "url": "https://x.com/oxansemsol/status/2072247731276411247",
+  "author_name": "Ansem.sol",
+  "text": "I have a feeling people are seriously underestimating $Vulland.\n\nConvince me I'm wrong.",
+  "snapshot": "https://gazette-vault.theretardedbull.workers.dev/snapshot/2072247731276411247.svg",
+  "receipt_page": "https://theretardedbull.xyz/receipt.html?id=2072247731276411247",
+  "arweave": "https://arweave.net/1yEzywD8of1HlOlQB3DNbBqXslT_DiznNVJHOlyH2LA",
+  "arweave_tx": "1yEzywD8of1HlOlQB3DNbBqXslT_DiznNVJHOlyH2LA",
+  "arweave_gateway": "https://gazette-vault.theretardedbull.workers.dev/ar/1yEzywD8of1HlOlQB3DNbBqXslT_DiznNVJHOlyH2LA",
+  "posted_at": "2026-07-01T09:15:34.000Z",
+  "saved_at": "2026-07-03T06:29:33.505Z",
+  "post_missing_at_save": false
  }
 ]
