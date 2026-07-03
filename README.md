@@ -37,7 +37,7 @@ The site works on any static host (Vercel/Netlify/Cloudflare Pages) the same way
 
 ## What this site is not
 
-Static HTML only. It stores tweet **URLs** — in the visitor's own browser (localStorage) and as JSON receipts in this public repo. No wallet connection, no token, no accounts, no cookies, no analytics, no data collection. Outbound links go to web.archive.org, archive.ph, and github.com. Disputes: bullitchloser@gmail.com (72h review); see `.well-known/security.txt`.
+Static HTML only. It stores tweet **URLs** — in the visitor's own browser (localStorage) and as JSON receipts in this public repo. No wallet connection, no token, no accounts, no cookies, no analytics, no data collection. Outbound links go to web.archive.org, archive.ph, and github.com. Disputes reviewed within 72h; see `.well-known/security.txt`.
 
 ## Config
 
@@ -48,4 +48,4 @@ Two settings at the top of the inline script in `index.html`:
 
 ## House rules
 
-We publish documents, not verdicts: archived posts, timestamps, public on-chain transactions. Disputes: bullitchloser@gmail.com — 72h review. Errors are delisted with a printed correction.
+We publish documents, not verdicts: archived posts, timestamps, public on-chain transactions. Disputes reviewed within 72h. Errors are delisted with a printed correction.

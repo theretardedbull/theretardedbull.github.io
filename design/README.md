@@ -34,7 +34,7 @@ Top→bottom:
    - Status line (IBM Plex Mono 11.5px, min-height 15px): ink `#231d14` on success, `#7a1f1f` on error. Messages: success "✓ SAVED LOCALLY — WAYBACK SNAPSHOT OPENING IN NEW TAB (LET IT FINISH)"; error "✗ X.COM / TWITTER.COM STATUS LINKS ONLY — PASTE THE FULL TWEET URL".
    - **Small print** (11px italic, ls .04em, `#5c4f38`): "*** to save a tweet — paste the URL of the post BEFORE it is deleted; once filed, the delete button can't reach it ***"
    - **Vault ledger** (margin-top 10px, 1px solid ink, bg `#fbf6e8`): one row per saved tweet (flex, gap 12px, padding 8px 12px, 1px `#d8cba6` top border between rows, Special Elite 12px, ink): `@handle` (700) · tweet id (`#5c4f38`) · **tweet-text ticker** (flex:1, min-width:0, 1px `#d8cba6` left+right borders, padding 0 10px; inner span duplicated twice, `animation: ticker 26s linear infinite` translating −50%; shows "“<tweet text>” — <author>", fallback "reading the words back from the archive…") · time (`#5c4f38`) · "saved ✓" (700) · links: "wayback ↗" + "arch.today ↗" (`#7a1f1f`, underline) + "view ↗" (ink, underline). **No green, no yellow — strictly ink/sepia/oxblood.**
-5. **Footer** — 3px double ink top border, space-between, 11.5px `#3d3426`: "We publish documents, not verdicts. Disputes: bullitchloser@gmail.com — 72h review." · "All handles fictional · bull crew local №420".
+5. **Footer** — 3px double ink top border, space-between, 11.5px `#3d3426`: "We publish documents, not verdicts. Disputes reviewed within 72h." · "All handles fictional · bull crew local №420".
 
 ### 3a — Notice of Construction (secondary patterns)
 Same paper/type system. Adds: black ink wire-ticker strip (Special Elite 13px cream text on `#231d14`, marquee 40s); double-border public-notice panel with centered small-caps headline; engraved city band (170px, bg `#f3ecd8`, flat ink `#2b2418` skyline blocks + palms + crane with swinging ◎ coin, label "— Sol York —" ls .5em); 3-frame newsroom grid (230px-tall framed slots, cigar-smoke wisp animation, Special Elite captions); works-progress bar (12% wide ink/paper hatch stripe animation, label "Works progress — 12% — pouring foundation"); milestone row ("✓ Now — the Saver (open) · Next — the vault ledger page · Then — dossiers · Soon — living portraits").
@@ -75,7 +75,7 @@ Radii: 0 everywhere on paper pages (sharp corners; the rotated-stamp trick suppl
 - `README.md` — permanence table (4 copies / 4 failure domains), launch checklist, monthly audit ritual, costs (~$17–20/mo at 2k saves).
 
 ## Legal guardrails (bake into all registry copy)
-Publish documents, never verdicts: archived post + timestamps + public on-chain transactions. Never "scammer/fraud/criminal" on a dossier. Attribution confidence stated; dispute path (bullitchloser@gmail.com, 72h) on every page; errors delisted with printed correction. Demo handles are fictional and labeled as such.
+Publish documents, never verdicts: archived post + timestamps + public on-chain transactions. Never "scammer/fraud/criminal" on a dossier. Attribution confidence stated; dispute path (72h) on every page; errors delisted with printed correction. Demo handles are fictional and labeled as such.
 
 ## Files
 - `The Rug Report.dc.html` — all design options (4a primary; open in browser; options stacked newest-first)
